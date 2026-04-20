@@ -1,18 +1,19 @@
 package model;
 
 public class MenuItem {
+    //Attribute
     private int id;
     private String name;
     private double price;
     private String category;
-
+    //Constructors
     public MenuItem(int id, String name, double price, String category) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.category = category;
     }
-    
+    //Getters&Setters
     public int getId() {
         return id;
     }
@@ -44,12 +45,12 @@ public class MenuItem {
     public void setCategory(String category) {
         this.category = category;
     }
-
+    //To convert the MenuItem object into a line 
     @Override
     public String toString() {
         return id + "," + name + "," + price + "," + category;
     }
-    
+     //To read the text line from the file and convert it into an MenuItem object.
     public static MenuItem fromString(String line){
         String p[] = line.split(",");
         

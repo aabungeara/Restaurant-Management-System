@@ -11,6 +11,7 @@ import javafx.scene.control.Alert;
  * @author hp
  */
 public class AlertUtil {
+    //ِAlert ERROR Messageِ
     public static void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -18,7 +19,7 @@ public class AlertUtil {
         alert.setContentText(message);
         alert.showAndWait();
     }
-
+    //ِAlert INFORMATION Messageِ
     public static void showInfo(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);

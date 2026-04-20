@@ -1,12 +1,13 @@
 package model;
 
 public class User {
+    //Attribute
     private int id;
     private String firstName;
     private String lastName;
     private String email;
     private String passwordHash;
-
+    //Constructors
     public User(int id, String firstName, String lastName, String email, String passwordHash) {
         this.id = id;
         this.firstName = firstName;
@@ -14,7 +15,7 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
     }
-    
+   //Getters&Setters
     public int getId() {
         return id;
     }
@@ -54,13 +55,13 @@ public class User {
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
     }
-
+    //To convert the User object into a line 
     @Override
     public String toString() {
         return id + "," + firstName + "," + lastName + "," + email + "," + passwordHash;
         //return "User{" + "id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", passwordHash=" + passwordHash + '}';
     }
-    
+     //To read the text line from the file and convert it into an User object.
     public static User fromString(String line) {
         String[] p = line.split(",");
         return new User(

@@ -26,11 +26,11 @@ public class FileUtil {
     public static final String TABLES_FILE = "data/tables.txt";
     public static final String MENUITEMS_FILE = "data/menuitems.txt";
     public static final String ORDERS_FILE = "data/orders.txt";
-
+    
+    //Create Files if not exists
     public static void ensureFiles() {
         try {
             Files.createDirectories(Paths.get(DATA_FOLDER));
-            System.out.println("DATA FOLDER CREATED OR ALREADY EXISTS: " + Paths.get(DATA_FOLDER).toAbsolutePath());
 
             File usersFile = new File(USERS_FILE);
             if (!usersFile.exists()) {
@@ -58,14 +58,15 @@ public class FileUtil {
     }
 
     // User Methods
+    //get user from file and convert to object and add to list and return Users
     public static List<User> loadUsers() {
         List<User> users = new ArrayList<>();
 
         try {
-            System.out.println("Reading from: " + Paths.get(USERS_FILE).toAbsolutePath());
+            
             List<String> lines = Files.readAllLines(Paths.get(USERS_FILE));
             for (String line : lines) {
-                System.out.println("LINE = [" + line + "]");
+                
                 if (!line.trim().isEmpty()) {
                     users.add(User.fromString(line));
                 }
@@ -76,7 +77,8 @@ public class FileUtil {
 
         return users;
     }
-
+    
+    
     public static void saveUsers(List<User> users) {
         ensureFiles();
         List<String> lines = new ArrayList<>();

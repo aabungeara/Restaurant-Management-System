@@ -51,43 +51,46 @@ public class loginController implements Initializable {
 
     @FXML
     private void loginBut(ActionEvent event) throws IOException {
+        //Read email and password
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
-
+        //Check that the fields are not empty
         if (email.isEmpty() || password.isEmpty()) {
             AlertUtil.showError("Login Error", "Please fill in all fields.");
             return;
         }
-
+        //Checks the email format
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            AlertUtil.showError("Login Error", "Invalid email format.");
+            return;
+        }
+        //To read saved users from the data file.
         List<User> users = FileUtil.loadUsers();
+        //Searching for a user by email
         User foundUser = null;
-
         for (User user : users) {
             if (user.getEmail().equalsIgnoreCase(email)) {
                 foundUser = user;
                 break;
             }
         }
-
+        //If the account does not exist
         if (foundUser == null) {
             AlertUtil.showError("Login Error", "Account does not exist.");
             return;
         }
-
+        //Encrypting the entered password
         String hashedPassword = HashUtil.md5(password);
-
+        //If the encrypted password does not match the stored value
         if (!foundUser.getPasswordHash().equals(hashedPassword)) {
             AlertUtil.showError("Login Error", "Incorrect password.");
             return;
         }
-
+        //Save the current user in Sessionx 
         Session.setCurrentUser(foundUser);
         AlertUtil.showInfo("Success", "Login successful.");
 
-        
-        // Dashboard.fxml
-        Session.setCurrentUser(foundUser);
-
+        //Open a page Dashboard.fxml
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dashboard.fxml"));
         Scene scene = new Scene(loader.load());
 
@@ -96,7 +99,7 @@ public class loginController implements Initializable {
         stage.show();
 
     }
-
+    //Open a page Dashboard.fxml
     @FXML
     private void signUpBut(ActionEvent event) throws IOException {
 
