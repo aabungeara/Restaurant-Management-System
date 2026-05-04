@@ -11,11 +11,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="500.0" prefWidth="900.0"
-            stylesheets="@../style/style.css"
-            xmlns="http://javafx.com/javafx/25"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="controller.MenuController">
+<AnchorPane prefHeight="500.0" prefWidth="900.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MenuController">
 
     <children>
         <HBox prefHeight="500.0" prefWidth="900.0">
@@ -24,42 +20,45 @@
 
                 <VBox prefWidth="300.0" spacing="15.0" styleClass="form-panel">
                     <padding>
-                        <Insets top="25.0" right="20.0" bottom="25.0" left="20.0"/>
+                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0" />
                     </padding>
 
-                    <Label text="Menu Management" styleClass="section-title"/>
+                    <Label styleClass="section-title" text="Menu Management" />
 
-                    <TextField fx:id="nameField" promptText="Item Name" styleClass="input-field"/>
-                    <TextField fx:id="priceField" promptText="Price" styleClass="input-field"/>
-                    <ComboBox fx:id="categoryBox" promptText="Select Category" styleClass="input-field"/>
+                    <TextField fx:id="nameField" promptText="Item Name" styleClass="input-field" />
+                    <TextField fx:id="priceField" promptText="Price" styleClass="input-field" />
+                    <ComboBox fx:id="categoryBox" promptText="Select Category" styleClass="input-field" />
 
-                    <Button fx:id="addEditBtn"
-                            text="Add Menu Item"
-                            onAction="#handleAddOrEditMenuItem"
-                            styleClass="main-button"/>
-                    <Button text="Delete Selected"
-                            onAction="#handleDeleteMenuItem"
-                            styleClass="danger-button"/>
-                    <Button text="Back to Dashboard"
-                            onAction="#backToDashboard"
-                            styleClass="secondary-button"/>
+                    <Button fx:id="addEditBtn" onAction="#handleAddOrEditMenuItem" styleClass="main-button" text="Add Menu Item" />
+                    <Button onAction="#handleDeleteMenuItem" styleClass="danger-button" text="Delete Selected" />
+                    <Button onAction="#backToDashboard" styleClass="secondary-button" text="Back to Dashboard" />
                 </VBox>
 
                 <VBox prefWidth="600.0" spacing="15.0" styleClass="table-panel">
                     <padding>
-                        <Insets top="25.0" right="20.0" bottom="25.0" left="20.0"/>
+                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0" />
                     </padding>
 
-                    <Label text="Restaurant Menu Items" styleClass="section-title"/>
-                    
-                    <TextField fx:id="searchField" promptText="Search by name..." styleClass="input-field"/>
+                    <Label styleClass="section-title" text="Restaurant Menu Items" />
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+
+                        <TextField fx:id="searchField" promptText="Search by Name" styleClass="input-field" />
+
+                        <ComboBox fx:id="categoryFilterBox" promptText="Category" styleClass="input-field" />
+
+                        <ComboBox fx:id="sortPriceBox" promptText="Sort Price" styleClass="input-field" />
+
+                    </HBox>
+
+
                     
                     <TableView fx:id="tableView" prefHeight="420.0" prefWidth="560.0">
                         <columns>
-                            <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID"/>
-                            <TableColumn fx:id="nameColumn" prefWidth="180.0" text="Name"/>
-                            <TableColumn fx:id="priceColumn" prefWidth="140.0" text="Price"/>
-                            <TableColumn fx:id="categoryColumn" prefWidth="160.0" text="Category"/>
+                            <TableColumn fx:id="idColumn" prefWidth="80.0" text="ID" />
+                            <TableColumn fx:id="nameColumn" prefWidth="180.0" text="Name" />
+                            <TableColumn fx:id="priceColumn" prefWidth="140.0" text="Price" />
+                            <TableColumn fx:id="categoryColumn" prefWidth="160.0" text="Category" />
                         </columns>
                     </TableView>
                 </VBox>

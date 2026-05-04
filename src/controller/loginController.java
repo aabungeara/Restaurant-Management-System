@@ -86,7 +86,7 @@ public class loginController implements Initializable {
             AlertUtil.showError("Login Error", "Incorrect password.");
             return;
         }
-        //Save the current user in Sessionx 
+        //Save the current user in Session
         Session.setCurrentUser(foundUser);
         AlertUtil.showInfo("Success", "Login successful.");
 
@@ -99,7 +99,7 @@ public class loginController implements Initializable {
         stage.show();
 
     }
-    //Open a page Dashboard.fxml
+    //Open a page signUp.fxml
     @FXML
     private void signUpBut(ActionEvent event) throws IOException {
 

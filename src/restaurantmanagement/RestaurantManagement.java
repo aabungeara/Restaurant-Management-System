@@ -16,6 +16,13 @@ import util.FileUtil;
  *
  * @author hp
  */
+/**
+ * أسماء الطلاب :
+ * 1- أحمد محمد أبو نقيره**120203199
+ * 2- عبد الناصر محمد كريم ايوب**120182543
+ * 3- صلاح الدين أبو عياده**120231570
+ * 4- أحمد السيد أبوجهل **120221272
+ */
 public class RestaurantManagement extends Application {
 
     @Override

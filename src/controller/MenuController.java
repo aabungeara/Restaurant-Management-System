@@ -22,8 +22,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import model.MenuItem;
 import util.FileUtil;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
+import util.AlertUtil;
 
 public class MenuController implements Initializable {
 
@@ -50,6 +49,11 @@ public class MenuController implements Initializable {
     private List<MenuItem> items;
     private MenuItem selectedItem = null;
 
+    @FXML
+    private ComboBox<String> categoryFilterBox;
+    @FXML
+    private ComboBox<String> sortPriceBox;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         FileUtil.ensureFiles();
@@ -75,8 +79,26 @@ public class MenuController implements Initializable {
         });
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
 
-        
-        setupSearchAndTable();
+        items = FileUtil.loadMenuItems();
+        tableView.setItems(FXCollections.observableArrayList(items));
+        // Category Filter
+        categoryFilterBox.setItems(FXCollections.observableArrayList(
+                "All", "Main Course", "Drinks", "Dessert", "Appetizer"
+        ));
+        categoryFilterBox.setValue("All");
+
+        // Sort Options
+        sortPriceBox.setItems(FXCollections.observableArrayList(
+                "Price Low to High",
+                "Price High to Low"
+        ));
+
+        // Search 
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilterAndSort());
+
+        categoryFilterBox.setOnAction(e -> applyFilterAndSort());
+
+        sortPriceBox.setOnAction(e -> applyFilterAndSort());
 
         tableView.setOnMouseClicked(event -> {
             selectedItem = tableView.getSelectionModel().getSelectedItem();
@@ -91,31 +113,6 @@ public class MenuController implements Initializable {
 
     }
 
-    private void loadMenuData() {
-        items = FileUtil.loadMenuItems();
-
-        FilteredList<MenuItem> filteredData
-                = new FilteredList<>(FXCollections.observableArrayList(items), b -> true);
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(item -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-
-                String searchKey = newValue.toLowerCase();
-
-                return item.getName().toLowerCase().contains(searchKey)
-                        || item.getCategory().toLowerCase().contains(searchKey)
-                        || String.valueOf(item.getPrice()).contains(searchKey);
-            });
-        });
-        SortedList<MenuItem> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(tableView.comparatorProperty());
-
-        tableView.setItems(sortedData);
-    }
-
     @FXML
     private void handleAddOrEditMenuItem(ActionEvent event) {
         String name = nameField.getText().trim();
@@ -123,7 +120,7 @@ public class MenuController implements Initializable {
         String category = categoryBox.getValue();
 
         if (name.isEmpty() || priceText.isEmpty() || category == null || category.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Please fill in all fields.");
+            AlertUtil.showError( "Validation Error", "Please fill in all fields.");
             return;
         }
 
@@ -131,18 +128,18 @@ public class MenuController implements Initializable {
         try {
             price = Double.parseDouble(priceText);
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Price must be a valid number.");
+            AlertUtil.showError("Validation Error", "Price must be a valid number.");
             return;
         }
         if (price <= 0) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Price must be greater than zero.");
+            AlertUtil.showError( "Validation Error", "Price must be greater than zero.");
             return;
         }
 
         for (MenuItem item : items) {
             if (item.getName().equalsIgnoreCase(name)
                     && (selectedItem == null || item.getId() != selectedItem.getId())) {
-                showAlert(Alert.AlertType.ERROR, "Validation Error", "Duplicate item name.");
+                AlertUtil.showError("Validation Error", "Duplicate item name.");
                 return;
             }
         }
@@ -150,17 +147,18 @@ public class MenuController implements Initializable {
             int newId = FileUtil.getNextMenuItemId(items);
             MenuItem newItem = new MenuItem(newId, name, price, category);
             items.add(newItem);
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Menu item added successfully.");
+            AlertUtil.showInfo("Success", "Menu item added successfully.");
         } else {
             selectedItem.setName(name);
             selectedItem.setPrice(price);
             selectedItem.setCategory(category);
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Menu item updated successfully.");
+            AlertUtil.showInfo("Success", "Menu item updated successfully.");
             selectedItem = null;
             addEditBtn.setText("Add Menu Item");
         }
         FileUtil.saveMenuItems(items);
-        setupSearchAndTable();
+        items = FileUtil.loadMenuItems();
+        applyFilterAndSort();
         clearFields();
     }
 
@@ -181,61 +179,63 @@ public class MenuController implements Initializable {
         tableView.getSelectionModel().clearSelection();
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
+    
     @FXML
     private void handleDeleteMenuItem(ActionEvent event) {
         MenuItem selected = tableView.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
-            showAlert(Alert.AlertType.ERROR, "Delete Error", "Please select a menu item to delete.");
+            AlertUtil.showError( "Delete Error", "Please select a menu item to delete.");
             return;
         }
 
         items.remove(selected);
         FileUtil.saveMenuItems(items);
-        setupSearchAndTable();
+        items = FileUtil.loadMenuItems();
+        applyFilterAndSort();
         clearFields();
         selectedItem = null;
         addEditBtn.setText("Add Menu Item");
 
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Menu item deleted successfully.");
+        AlertUtil.showInfo("Success", "Menu item deleted successfully.");
 
     }
 
-    private void setupSearchAndTable() {
-        items = FileUtil.loadMenuItems();
+    private void applyFilterAndSort() {
 
-        FilteredList<MenuItem> filteredData
-                = new FilteredList<>(FXCollections.observableArrayList(items), b -> true);
+        String searchText = searchField.getText().toLowerCase().trim();
+        String category = categoryFilterBox.getValue();
+        String sortOption = sortPriceBox.getValue();
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(item -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
+        List<MenuItem> result = items.stream()
+                //filter
+                .filter(item -> {
+                    boolean matchesName = searchText.isEmpty()
+                            || item.getName().toLowerCase().contains(searchText);
 
-                String searchKey = newValue.toLowerCase();
+                    boolean matchesCategory = (category == null || category.equals("All"))
+                            || item.getCategory().equalsIgnoreCase(category);
 
-                if (item.getName().toLowerCase().contains(searchKey)) {
-                    return true;
-                } else if (item.getCategory().toLowerCase().contains(searchKey)) {
-                    return true;
-                } else {
-                    return String.format("%.2f", item.getPrice()).contains(searchKey);
-                }
-            });
-        });
+                    return matchesName && matchesCategory;
+                })
+                //sort
+                .sorted((a, b) -> {
+                    if (sortOption == null) {
+                        return 0;
+                    }
 
-        SortedList<MenuItem> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(tableView.comparatorProperty());
-        tableView.setItems(sortedData);
+                    if (sortOption.equals("Price Low to High")) {
+                        return Double.compare(a.getPrice(), b.getPrice());
+                    } else {
+                        return Double.compare(b.getPrice(), a.getPrice());
+                    }
+                })
+                .toList();
+        if (!searchText.isEmpty() && result.isEmpty()) {
+            AlertUtil.showWarning("No Results", "No Menu found with this item.");
+        }
+
+        tableView.setItems(FXCollections.observableArrayList(result));
     }
 
 }

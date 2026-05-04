@@ -23,7 +23,8 @@ import util.Session;
  * @author hp
  */
 public class DashboardController implements Initializable {
-     private void switchPage(ActionEvent event, String path) throws IOException {
+    //To switch Page
+    private void switchPage(ActionEvent event, String path) throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource(path));
         Scene scene = new Scene(loader.load());
 

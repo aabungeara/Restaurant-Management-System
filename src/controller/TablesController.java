@@ -15,14 +15,15 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import model.RestaurantTable;
+import util.AlertUtil;
 import util.FileUtil;
 
 /**
@@ -46,14 +47,19 @@ public class TablesController implements Initializable {
     private TableColumn<RestaurantTable, Integer> tableNumberColumn;
     @FXML
     private TableColumn<RestaurantTable, Integer> capacityColumn;
-    
+
     private List<RestaurantTable> tables;
     private RestaurantTable selectedTable = null;
+    @FXML
+    private TextField searchField;
+    @FXML
+    private ComboBox<String> sortByCapacity;
 
     /**
      * Initializes the controller class.
      */
     @Override
+    //to load data in open table scene 
     public void initialize(URL url, ResourceBundle rb) {
         FileUtil.ensureFiles();
 
@@ -62,6 +68,15 @@ public class TablesController implements Initializable {
         capacityColumn.setCellValueFactory(new PropertyValueFactory<>("capacity"));
 
         loadTableData();
+
+        sortByCapacity.setItems(FXCollections.observableArrayList(
+                "Capacity Low to High",
+                "Capacity High to Low"
+        ));
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilterAndSort());
+
+        sortByCapacity.setOnAction(e -> applyFilterAndSort());
 
         tableView.setOnMouseClicked(event -> {
             selectedTable = tableView.getSelectionModel().getSelectedItem();
@@ -72,7 +87,8 @@ public class TablesController implements Initializable {
                 addEditBtn.setText("Edit Table");
             }
         });
-    }    
+    }
+
     private void loadTableData() {
         tables = FileUtil.loadTables();
         tableView.setItems(FXCollections.observableArrayList(tables));
@@ -84,10 +100,10 @@ public class TablesController implements Initializable {
         String capacityText = capacityField.getText().trim();
 
         if (tableNumberText.isEmpty() || capacityText.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Please fill in all fields.");
+            AlertUtil.showError( "Validation Error", "Please fill in all fields.");
             return;
         }
-
+        //convert string to integer
         int tableNumber;
         int capacity;
 
@@ -95,31 +111,32 @@ public class TablesController implements Initializable {
             tableNumber = Integer.parseInt(tableNumberText);
             capacity = Integer.parseInt(capacityText);
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Table number and capacity must be numeric.");
+            AlertUtil.showError( "Validation Error", "Table number and capacity must be numeric.");
             return;
         }
         if (tableNumber <= 0 || capacity <= 0) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Values must be greater than zero.");
+            AlertUtil.showError( "Validation Error", "Values must be greater than zero.");
             return;
         }
-
+        // to prevent repeat table number 
         for (RestaurantTable table : tables) {
-            if (table.getTableNumber() == tableNumber &&
-                (selectedTable == null || table.getId() != selectedTable.getId())) {
-                showAlert(Alert.AlertType.ERROR, "Validation Error", "Duplicate table number.");
+            if (table.getTableNumber() == tableNumber
+                    && (selectedTable == null || table.getId() != selectedTable.getId())) {
+                AlertUtil.showError("Validation Error", "Duplicate table number.");
                 return;
             }
         }
-
+        // add to table 
         if (selectedTable == null) {
             int newId = FileUtil.getNextTableId(tables);
             RestaurantTable newTable = new RestaurantTable(newId, tableNumber, capacity);
             tables.add(newTable);
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Table added successfully.");
-        }else {
+            AlertUtil.showInfo( "Success", "Table added successfully.");
+        } else {
+            //edit row from table view
             selectedTable.setTableNumber(tableNumber);
             selectedTable.setCapacity(capacity);
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Table updated successfully.");
+            AlertUtil.showInfo( "Success", "Table updated successfully.");
             selectedTable = null;
             addEditBtn.setText("Add Table");
         }
@@ -127,8 +144,6 @@ public class TablesController implements Initializable {
         FileUtil.saveTables(tables);
         loadTableData();
         clearFields();
-    
-
 
     }
 
@@ -141,20 +156,45 @@ public class TablesController implements Initializable {
         stage.setScene(scene);
         stage.show();
     }
-    
+
     private void clearFields() {
         tableNumberField.clear();
         capacityField.clear();
         tableView.getSelectionModel().clearSelection();
     }
 
-    
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void applyFilterAndSort() {
+        String searchText = searchField.getText().trim();
+        String sortOption = sortByCapacity.getValue();
+
+        List<RestaurantTable> result = tables.stream()
+                .filter(table -> {
+                    boolean matchesSearch = searchText.isEmpty()
+                            || String.valueOf(table.getTableNumber()).contains(searchText);
+
+                    return matchesSearch;
+                })
+                .sorted((a, b) -> {
+                    if (sortOption == null) {
+                        return 0;
+                    }
+
+                    if (sortOption.equals("Capacity Low to High")) {
+                        System.out.println( Integer.compare(a.getCapacity(), b.getCapacity()));
+                        return Integer.compare(a.getCapacity(), b.getCapacity());
+                        
+                    } else {
+                        System.out.println(Integer.compare(b.getCapacity(), a.getCapacity()));
+                        return Integer.compare(b.getCapacity(), a.getCapacity());
+                    }
+                })
+                .toList();
+
+        if (!searchText.isEmpty() && result.isEmpty()) {
+            AlertUtil.showWarning("No Results", "No table found with this number.");
+        }
+
+        tableView.setItems(FXCollections.observableArrayList(result));
     }
-    
+
 }

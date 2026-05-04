@@ -52,30 +52,32 @@ public class SignUpController implements Initializable {
     @FXML
     private void handleSignUp(ActionEvent event) throws IOException{
         FileUtil.ensureFiles();
+        //Read values ​​from fields
         String firstName = firstNameField.getText().trim();
         String lastName = lastNameField.getText().trim();
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
         String confirmPassword = confirmPasswordField.getText().trim();
         
+        //Check for empty fields
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty()
                 || password.isEmpty() || confirmPassword.isEmpty()) {
             AlertUtil.showError("Validation Error", "Please fill in all fields.");
             return;
         }
-
+        //Check the email format
         if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email)) {
             AlertUtil.showError("Validation Error", "Invalid email format.");
             return;
         }
-
+        //Checking the password matches
         if (!password.equals(confirmPassword)) {
             AlertUtil.showError("Validation Error", "Passwords do not match.");
             return;
         }
         
         List<User> users = FileUtil.loadUsers();
-
+        //Check that the email is not duplicated.
         for (User user : users) {
             if (user.getEmail().equalsIgnoreCase(email)) {
                 AlertUtil.showError("Validation Error", "Email already exists.");
@@ -84,14 +86,15 @@ public class SignUpController implements Initializable {
         }
 
         int newId = FileUtil.getNextUserId(users);
+        //Password encryption
         String passwordHash = HashUtil.md5(password);
-
+        //Create a User object and add to user and save in user file
         User newUser = new User(newId, firstName, lastName, email, passwordHash);
         users.add(newUser);
         FileUtil.saveUsers(users);
 
         AlertUtil.showInfo("Success", "Account created successfully.");
-        
+        //Open login page
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/Login.fxml"));
         Scene scene = new Scene(loader.load());
 
@@ -103,6 +106,7 @@ public class SignUpController implements Initializable {
 
     @FXML
     private void goToLogin(ActionEvent event) throws IOException {
+        //Open login page
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/Login.fxml"));
         Scene scene = new Scene(loader.load());
 

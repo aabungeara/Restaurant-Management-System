@@ -27,4 +27,12 @@ public class AlertUtil {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    //ِAlert INFORMATION Messageِ
+    public static void showWarning(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
 }

@@ -1,6 +1,8 @@
 package model;
 
 public class MenuItem {
+
+    
     //Attribute
     private int id;
     private String name;

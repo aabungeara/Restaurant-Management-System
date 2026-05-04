@@ -23,9 +23,8 @@ import model.MenuItem;
 import model.Order;
 import model.RestaurantTable;
 import util.FileUtil;
-import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.scene.control.TableCell;
+import util.AlertUtil;
 
 /**
  * FXML Controller class
@@ -34,8 +33,6 @@ import javafx.scene.control.TableCell;
  */
 public class OrdersController implements Initializable {
 
-    @FXML
-    private TextField searchField;
     @FXML
     private ComboBox<String> tableBox;
     @FXML
@@ -62,6 +59,12 @@ public class OrdersController implements Initializable {
     private List<Order> orders;
     private List<RestaurantTable> tables;
     private List<MenuItem> menuItems;
+    @FXML
+    private ComboBox<String> filterStatusBox;
+    @FXML
+    private TextField searchTableIdField;
+    @FXML
+    private ComboBox<String> sortOrderBox;
 
     /**
      * Initializes the controller class.
@@ -70,28 +73,48 @@ public class OrdersController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         FileUtil.ensureFiles();
 
+        //Loading tables and items
         tables = FileUtil.loadTables();
         menuItems = FileUtil.loadMenuItems();
-
+        //Fill tableBox
         for (RestaurantTable table : tables) {
             tableBox.getItems().add("Table " + table.getTableNumber() + " (ID: " + table.getId() + ")");
         }
-
+        //Fill itemBox
         for (MenuItem item : menuItems) {
             itemBox.getItems().add(
                     item.getName() + " - " + String.format("%.2f", item.getPrice()) + " (ID: " + item.getId() + ")"
             );
         }
-
+        //Fill statusBox
         statusBox.setItems(FXCollections.observableArrayList(
                 "Pending", "Preparing", "Served"
         ));
+        //Fill filterStatusBox
+        filterStatusBox.setItems(FXCollections.observableArrayList(
+                "All", "Pending", "Preparing", "Served"
+        ));
+        filterStatusBox.setValue("All");
+        //Fill sortOrderBox
+        sortOrderBox.setItems(FXCollections.observableArrayList(
+                "Quantity Low to High",
+                "Quantity High to Low",
+                "Status A to Z",
+                "Status Z to A"
+        ));
+        //Action
+        searchTableIdField.textProperty().addListener((obs, oldVal, newVal) -> applyFilterAndSort());
 
+        filterStatusBox.setOnAction(e -> applyFilterAndSort());
+
+        sortOrderBox.setOnAction(e -> applyFilterAndSort());
+        //Linking table columns to properties
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         tableNumberColumn.setCellValueFactory(new PropertyValueFactory<>("tableNumber"));
         itemNameColumn.setCellValueFactory(new PropertyValueFactory<>("itemName"));
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
+//        Color the status column
         statusColumn.setCellFactory(column -> new TableCell<Order, String>() {
             @Override
             protected void updateItem(String status, boolean empty) {
@@ -123,11 +146,11 @@ public class OrdersController implements Initializable {
         loadOrdersData();
 
         if (tables.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Tables", "Please add tables first.");
+            AlertUtil.showWarning( "No Tables", "Please add tables first.");
         }
 
         if (menuItems.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Menu Items", "Please add menu items first.");
+            AlertUtil.showWarning( "No Menu Items", "Please add menu items first.");
         }
     }
 
@@ -135,13 +158,14 @@ public class OrdersController implements Initializable {
         orders = FileUtil.loadOrders();
 
         for (Order order : orders) {
+            //Convert tableId to tableNumber
             for (RestaurantTable table : tables) {
                 if (table.getId() == order.getTableId()) {
                     order.setTableNumber(table.getTableNumber());
                     break;
                 }
             }
-
+            //Convert itemId to itemName
             for (MenuItem item : menuItems) {
                 if (item.getId() == order.getItemId()) {
                     order.setItemName(item.getName());
@@ -149,38 +173,14 @@ public class OrdersController implements Initializable {
                 }
             }
         }
-        FilteredList<Order> filteredData
-                = new FilteredList<>(FXCollections.observableArrayList(orders), b -> true);
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(order -> {
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-
-                String key = newValue.toLowerCase();
-
-                if (String.valueOf(order.getTableNumber()).contains(key)) {
-                    return true;
-                } else if (order.getItemName() != null && order.getItemName().toLowerCase().contains(key)) {
-                    return true;
-                } else if (order.getStatus().toLowerCase().contains(key)) {
-                    return true;
-                } else {
-                    return String.valueOf(order.getQuantity()).contains(key);
-                }
-            });
-        });
-
-        SortedList<Order> sortedData = new SortedList<>(filteredData);
-        sortedData.comparatorProperty().bind(tableView.comparatorProperty());
-        tableView.setItems(sortedData);
+        tableView.setItems(FXCollections.observableArrayList(orders));
     }
 
     @FXML
     private void handleAddOrder(ActionEvent event) {
         if (tables.isEmpty() || menuItems.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, "Missing Data", "Please add tables and menu items first.");
+            AlertUtil.showError( "Missing Data", "Please add tables and menu items first.");
             return;
         }
         String selectedTable = tableBox.getValue();
@@ -189,27 +189,27 @@ public class OrdersController implements Initializable {
         String status = statusBox.getValue();
 
         if (selectedTable == null || selectedItem == null || quantityText.isEmpty() || status == null) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Please complete all fields.");
+            AlertUtil.showError("Validation Error", "Please complete all fields.");
             return;
         }
-
+        //Convert quantity to number
         int quantity;
         try {
             quantity = Integer.parseInt(quantityText);
         } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Quantity must be a numeric value.");
+            AlertUtil.showError( "Validation Error", "Quantity must be a numeric value.");
             return;
         }
 
         if (quantity <= 0) {
-            showAlert(Alert.AlertType.ERROR, "Validation Error", "Quantity must be greater than zero.");
+            AlertUtil.showError( "Validation Error", "Quantity must be greater than zero.");
             return;
         }
 
-        
+        //Extracting IDs from the displayed text
         int tableId = extractId(selectedTable);
         int itemId = extractId(selectedItem);
-
+        //Generate a new order ID
         int newId = FileUtil.getNextOrderId(orders);
         Order newOrder = new Order(newId, tableId, itemId, quantity, status);
 
@@ -218,7 +218,7 @@ public class OrdersController implements Initializable {
         loadOrdersData();
         clearFields();
 
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Order added successfully.");
+        AlertUtil.showInfo("Success", "Order added successfully.");
 
     }
 
@@ -246,20 +246,14 @@ public class OrdersController implements Initializable {
         statusBox.setValue(null);
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
+
 
     @FXML
     private void handleDeleteOrder(ActionEvent event) {
         Order selectedOrder = tableView.getSelectionModel().getSelectedItem();
 
         if (selectedOrder == null) {
-            showAlert(Alert.AlertType.ERROR, "Delete Error", "Please select an order to delete.");
+            AlertUtil.showError("Delete Error", "Please select an order to delete.");
             return;
         }
 
@@ -268,7 +262,50 @@ public class OrdersController implements Initializable {
         loadOrdersData();
         clearFields();
 
-        showAlert(Alert.AlertType.INFORMATION, "Success", "Order deleted successfully.");
+        AlertUtil.showInfo("Success", "Order deleted successfully.");
+    }
+
+    private void applyFilterAndSort() {
+
+        String status = filterStatusBox.getValue();
+        String tableIdText = searchTableIdField.getText().trim();
+        String sortOption = sortOrderBox.getValue();
+
+        List<Order> result = orders.stream()
+                //filter
+                .filter(order -> {
+
+                    boolean matchesStatus = (status == null || status.equals("All"))
+                            || order.getStatus().equalsIgnoreCase(status);
+
+                    boolean matchesTable = tableIdText.isEmpty()
+                            || String.valueOf(order.getTableNumber()).contains(tableIdText);
+
+                    return matchesStatus && matchesTable;
+                })
+                //sort
+                .sorted((a, b) -> {
+                    if (sortOption == null) {
+                        return 0;
+                    }
+
+                    switch (sortOption) {
+                        case "Quantity Low to High":
+                            return Integer.compare(a.getQuantity(), b.getQuantity());
+                        case "Quantity High to Low":
+                            return Integer.compare(b.getQuantity(), a.getQuantity());
+                        case "Status A to Z":
+                            return a.getStatus().compareToIgnoreCase(b.getStatus());
+                        default:
+                            return b.getStatus().compareToIgnoreCase(a.getStatus());
+                    }
+                })
+                .toList();
+        if (!tableIdText.isEmpty() && result.isEmpty()) {
+            AlertUtil.showWarning("No Results", "No Order found with this table id.");
+        }
+
+        tableView.setItems(FXCollections.observableArrayList(result));
     }
 
 }

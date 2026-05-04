@@ -20,7 +20,8 @@ import model.Order;
  * @author hp
  */
 public class FileUtil {
-
+    
+    // Paths for all data storage files
     public static final String DATA_FOLDER = "data";
     public static final String USERS_FILE = "data/users.txt";
     public static final String TABLES_FILE = "data/tables.txt";
@@ -78,7 +79,7 @@ public class FileUtil {
         return users;
     }
     
-    
+    // Converts the list of User objects into text format and saves them into users.txt file
     public static void saveUsers(List<User> users) {
         ensureFiles();
         List<String> lines = new ArrayList<>();
@@ -93,7 +94,7 @@ public class FileUtil {
             e.printStackTrace();
         }
     }
-
+    // Generates the next user ID based on the last user's ID in the list
     public static int getNextUserId(List<User> users) {
         if (users.isEmpty()) {
             return 1;
