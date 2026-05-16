@@ -6,7 +6,7 @@ package controller;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
+//import java.util.List;
 import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import javafx.event.ActionEvent;
@@ -20,8 +20,10 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import model.User;
 import util.AlertUtil;
-import util.FileUtil;
+//import util.FileUtil;
 import util.HashUtil;
+import dao.UserDAO;
+import java.sql.SQLException;
 
 /**
  * FXML Controller class
@@ -47,18 +49,18 @@ public class SignUpController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         // TODO
-    }    
+    }
 
     @FXML
-    private void handleSignUp(ActionEvent event) throws IOException{
-        FileUtil.ensureFiles();
+    private void handleSignUp(ActionEvent event) throws IOException {
+//        FileUtil.ensureFiles();
         //Read values ​​from fields
         String firstName = firstNameField.getText().trim();
         String lastName = lastNameField.getText().trim();
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
         String confirmPassword = confirmPasswordField.getText().trim();
-        
+
         //Check for empty fields
         if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty()
                 || password.isEmpty() || confirmPassword.isEmpty()) {
@@ -75,23 +77,39 @@ public class SignUpController implements Initializable {
             AlertUtil.showError("Validation Error", "Passwords do not match.");
             return;
         }
-        
-        List<User> users = FileUtil.loadUsers();
-        //Check that the email is not duplicated.
-        for (User user : users) {
-            if (user.getEmail().equalsIgnoreCase(email)) {
+
+//        List<User> users = FileUtil.loadUsers();
+//        //Check that the email is not duplicated.
+//        for (User user : users) {
+//            if (user.getEmail().equalsIgnoreCase(email)) {
+//                AlertUtil.showError("Validation Error", "Email already exists.");
+//                return;
+//            }
+//        }
+//
+//        int newId = FileUtil.getNextUserId(users);
+//        //Password encryption
+//        String passwordHash = HashUtil.md5(password);
+//        //Create a User object and add to user and save in user file
+//        User newUser = new User(newId, firstName, lastName, email, passwordHash);
+//        users.add(newUser);
+//        FileUtil.saveUsers(users);
+        try {
+            if (UserDAO.emailExists(email)) {
                 AlertUtil.showError("Validation Error", "Email already exists.");
                 return;
             }
-        }
 
-        int newId = FileUtil.getNextUserId(users);
-        //Password encryption
-        String passwordHash = HashUtil.md5(password);
-        //Create a User object and add to user and save in user file
-        User newUser = new User(newId, firstName, lastName, email, passwordHash);
-        users.add(newUser);
-        FileUtil.saveUsers(users);
+            String passwordHash = HashUtil.md5(password);
+
+            User newUser = new User(0, firstName, lastName, email, passwordHash);
+
+            UserDAO.insertUser(newUser);
+
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Could not create account.");
+            return;
+        }
 
         AlertUtil.showInfo("Success", "Account created successfully.");
         //Open login page
@@ -114,5 +132,5 @@ public class SignUpController implements Initializable {
         stage.setScene(scene);
         stage.show();
     }
-    
+
 }

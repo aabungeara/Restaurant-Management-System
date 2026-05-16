@@ -11,7 +11,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableCell;
@@ -21,8 +20,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import model.MenuItem;
-import util.FileUtil;
 import util.AlertUtil;
+import dao.MenuItemDAO;
+import java.sql.SQLException;
 
 public class MenuController implements Initializable {
 
@@ -56,7 +56,6 @@ public class MenuController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        FileUtil.ensureFiles();
 
         categoryBox.setItems(FXCollections.observableArrayList(
                 "Main Course", "Drinks", "Dessert", "Appetizer"
@@ -79,9 +78,9 @@ public class MenuController implements Initializable {
         });
         categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
 
-        items = FileUtil.loadMenuItems();
-        tableView.setItems(FXCollections.observableArrayList(items));
-        // Category Filter
+        loadMenuData();
+
+        // Category option
         categoryFilterBox.setItems(FXCollections.observableArrayList(
                 "All", "Main Course", "Drinks", "Dessert", "Appetizer"
         ));
@@ -120,7 +119,7 @@ public class MenuController implements Initializable {
         String category = categoryBox.getValue();
 
         if (name.isEmpty() || priceText.isEmpty() || category == null || category.isEmpty()) {
-            AlertUtil.showError( "Validation Error", "Please fill in all fields.");
+            AlertUtil.showError("Validation Error", "Please fill in all fields.");
             return;
         }
 
@@ -132,34 +131,49 @@ public class MenuController implements Initializable {
             return;
         }
         if (price <= 0) {
-            AlertUtil.showError( "Validation Error", "Price must be greater than zero.");
+            AlertUtil.showError("Validation Error", "Price must be greater than zero.");
             return;
         }
 
-        for (MenuItem item : items) {
-            if (item.getName().equalsIgnoreCase(name)
-                    && (selectedItem == null || item.getId() != selectedItem.getId())) {
-                AlertUtil.showError("Validation Error", "Duplicate item name.");
-                return;
+        try {
+            if (selectedItem == null) {
+
+                if (MenuItemDAO.menuItemNameExists(name, 0)) {
+                    AlertUtil.showError("Validation Error", "Duplicate item name.");
+                    return;
+                }
+
+                MenuItem newItem = new MenuItem(0, name, price, category);
+                MenuItemDAO.insertMenuItem(newItem);
+
+                AlertUtil.showInfo("Success", "Menu item added successfully.");
+
+            } else {
+
+                if (MenuItemDAO.menuItemNameExists(name, selectedItem.getId())) {
+                    AlertUtil.showError("Validation Error", "Duplicate item name.");
+                    return;
+                }
+
+                selectedItem.setName(name);
+                selectedItem.setPrice(price);
+                selectedItem.setCategory(category);
+
+                MenuItemDAO.updateMenuItem(selectedItem);
+
+                selectedItem = null;
+                addEditBtn.setText("Add Menu Item");
+
+                AlertUtil.showInfo("Success", "Menu item updated successfully.");
             }
+
+            loadMenuData();
+            clearFields();
+            applyFilterAndSort();
+
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Failed to save menu item data.");
         }
-        if (selectedItem == null) {
-            int newId = FileUtil.getNextMenuItemId(items);
-            MenuItem newItem = new MenuItem(newId, name, price, category);
-            items.add(newItem);
-            AlertUtil.showInfo("Success", "Menu item added successfully.");
-        } else {
-            selectedItem.setName(name);
-            selectedItem.setPrice(price);
-            selectedItem.setCategory(category);
-            AlertUtil.showInfo("Success", "Menu item updated successfully.");
-            selectedItem = null;
-            addEditBtn.setText("Add Menu Item");
-        }
-        FileUtil.saveMenuItems(items);
-        items = FileUtil.loadMenuItems();
-        applyFilterAndSort();
-        clearFields();
     }
 
     @FXML
@@ -179,29 +193,46 @@ public class MenuController implements Initializable {
         tableView.getSelectionModel().clearSelection();
     }
 
-    
+    private void loadMenuData() {
+        try {
+            items = MenuItemDAO.getAllMenuItems();
+            tableView.setItems(FXCollections.observableArrayList(items));
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Failed to load menu items from database.");
+        }
+    }
+
     @FXML
     private void handleDeleteMenuItem(ActionEvent event) {
         MenuItem selected = tableView.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
-            AlertUtil.showError( "Delete Error", "Please select a menu item to delete.");
+            AlertUtil.showError("Delete Error", "Please select a menu item to delete.");
             return;
         }
 
-        items.remove(selected);
-        FileUtil.saveMenuItems(items);
-        items = FileUtil.loadMenuItems();
-        applyFilterAndSort();
-        clearFields();
-        selectedItem = null;
-        addEditBtn.setText("Add Menu Item");
+        try {
+            MenuItemDAO.deleteMenuItem(selected.getId());
 
-        AlertUtil.showInfo("Success", "Menu item deleted successfully.");
+            loadMenuData();
+            clearFields();
+            selectedItem = null;
+            addEditBtn.setText("Add Menu Item");
+            applyFilterAndSort();
+
+            AlertUtil.showInfo("Success", "Menu item deleted successfully.");
+
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error",
+                    "Failed to delete menu item. It may be used by an order.");
+        }
 
     }
 
     private void applyFilterAndSort() {
+        if (items == null) {
+            return;
+        }
 
         String searchText = searchField.getText().toLowerCase().trim();
         String category = categoryFilterBox.getValue();

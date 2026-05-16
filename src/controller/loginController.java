@@ -25,6 +25,8 @@ import util.AlertUtil;
 import util.FileUtil;
 import util.HashUtil;
 import util.Session;
+import dao.UserDAO;
+import java.sql.SQLException;
 
 /**
  *
@@ -64,16 +66,26 @@ public class loginController implements Initializable {
             AlertUtil.showError("Login Error", "Invalid email format.");
             return;
         }
-        //To read saved users from the data file.
-        List<User> users = FileUtil.loadUsers();
-        //Searching for a user by email
-        User foundUser = null;
-        for (User user : users) {
-            if (user.getEmail().equalsIgnoreCase(email)) {
-                foundUser = user;
-                break;
-            }
+//        //To read saved users from the data file.
+//        List<User> users = FileUtil.loadUsers();
+//        //Searching for a user by email
+//        User foundUser = null;
+//        for (User user : users) {
+//            if (user.getEmail().equalsIgnoreCase(email)) {
+//                foundUser = user;
+//                break;
+//            }
+//        }
+
+        User foundUser;
+
+        try {
+            foundUser = UserDAO.findByEmail(email);
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Database connection failed.");
+            return;
         }
+        
         //If the account does not exist
         if (foundUser == null) {
             AlertUtil.showError("Login Error", "Account does not exist.");
@@ -99,6 +111,7 @@ public class loginController implements Initializable {
         stage.show();
 
     }
+
     //Open a page signUp.fxml
     @FXML
     private void signUpBut(ActionEvent event) throws IOException {

@@ -25,6 +25,8 @@ import javafx.stage.Stage;
 import model.RestaurantTable;
 import util.AlertUtil;
 import util.FileUtil;
+import dao.TableDAO;
+import java.sql.SQLException;
 
 /**
  * FXML Controller class
@@ -68,7 +70,7 @@ public class TablesController implements Initializable {
         capacityColumn.setCellValueFactory(new PropertyValueFactory<>("capacity"));
 
         loadTableData();
-
+        //fills sortByCapacity item
         sortByCapacity.setItems(FXCollections.observableArrayList(
                 "Capacity Low to High",
                 "Capacity High to Low"
@@ -90,17 +92,24 @@ public class TablesController implements Initializable {
     }
 
     private void loadTableData() {
-        tables = FileUtil.loadTables();
-        tableView.setItems(FXCollections.observableArrayList(tables));
+//        tables = FileUtil.loadTables();
+//        tableView.setItems(FXCollections.observableArrayList(tables));
+
+        try {
+            tables = TableDAO.getAllTables();
+            tableView.setItems(FXCollections.observableArrayList(tables));
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Failed to load tables from database.");
+        }
     }
 
     @FXML
-    private void handleAddOrEditTable(ActionEvent event) {
+    private void handleAddOrEditTable(ActionEvent event) throws SQLException {
         String tableNumberText = tableNumberField.getText().trim();
         String capacityText = capacityField.getText().trim();
 
         if (tableNumberText.isEmpty() || capacityText.isEmpty()) {
-            AlertUtil.showError( "Validation Error", "Please fill in all fields.");
+            AlertUtil.showError("Validation Error", "Please fill in all fields.");
             return;
         }
         //convert string to integer
@@ -111,11 +120,11 @@ public class TablesController implements Initializable {
             tableNumber = Integer.parseInt(tableNumberText);
             capacity = Integer.parseInt(capacityText);
         } catch (NumberFormatException e) {
-            AlertUtil.showError( "Validation Error", "Table number and capacity must be numeric.");
+            AlertUtil.showError("Validation Error", "Table number and capacity must be numeric.");
             return;
         }
         if (tableNumber <= 0 || capacity <= 0) {
-            AlertUtil.showError( "Validation Error", "Values must be greater than zero.");
+            AlertUtil.showError("Validation Error", "Values must be greater than zero.");
             return;
         }
         // to prevent repeat table number 
@@ -126,25 +135,66 @@ public class TablesController implements Initializable {
                 return;
             }
         }
-        // add to table 
-        if (selectedTable == null) {
-            int newId = FileUtil.getNextTableId(tables);
-            RestaurantTable newTable = new RestaurantTable(newId, tableNumber, capacity);
-            tables.add(newTable);
-            AlertUtil.showInfo( "Success", "Table added successfully.");
-        } else {
-            //edit row from table view
-            selectedTable.setTableNumber(tableNumber);
-            selectedTable.setCapacity(capacity);
-            AlertUtil.showInfo( "Success", "Table updated successfully.");
-            selectedTable = null;
-            addEditBtn.setText("Add Table");
+//        // add to table 
+//        if (selectedTable == null) {
+//            int newId = FileUtil.getNextTableId(tables);
+//            RestaurantTable newTable = new RestaurantTable(newId, tableNumber, capacity);
+//            tables.add(newTable);
+//            AlertUtil.showInfo("Success", "Table added successfully.");
+//        } else {
+//            //edit row from table view
+//            selectedTable.setTableNumber(tableNumber);
+//            selectedTable.setCapacity(capacity);
+//            AlertUtil.showInfo("Success", "Table updated successfully.");
+//            selectedTable = null;
+//            addEditBtn.setText("Add Table");
+//        }
+
+        try {
+            // Add new table
+            if (selectedTable == null) {
+
+                if (TableDAO.tableNumberExists(tableNumber, 0)) {
+                    AlertUtil.showError("Validation Error", "Duplicate table number.");
+                    return;
+                }
+
+                RestaurantTable newTable = new RestaurantTable(0, tableNumber, capacity);
+                TableDAO.insertTable(newTable);
+
+                AlertUtil.showInfo("Success", "Table added successfully.");
+
+            } // Edit selected table
+            else {
+
+                if (TableDAO.tableNumberExists(tableNumber, selectedTable.getId())) {
+                    AlertUtil.showError("Validation Error", "Duplicate table number.");
+                    return;
+                }
+
+                selectedTable.setTableNumber(tableNumber);
+                selectedTable.setCapacity(capacity);
+
+                TableDAO.updateTable(selectedTable);
+
+                selectedTable = null;
+                addEditBtn.setText("Add Table");
+
+                AlertUtil.showInfo("Success", "Table updated successfully.");
+            }
+
+            // Reload live data from database
+            loadTableData();
+
+            // Clear input fields
+            clearFields();
+
+            // Apply current search/sort if exists
+            applyFilterAndSort();
+
+        } catch (SQLException e) {
+            AlertUtil.showError("Database Error", "Failed to save table data.");
         }
-
-        FileUtil.saveTables(tables);
-        loadTableData();
-        clearFields();
-
     }
 
     @FXML
@@ -180,11 +230,9 @@ public class TablesController implements Initializable {
                     }
 
                     if (sortOption.equals("Capacity Low to High")) {
-                        System.out.println( Integer.compare(a.getCapacity(), b.getCapacity()));
                         return Integer.compare(a.getCapacity(), b.getCapacity());
-                        
+
                     } else {
-                        System.out.println(Integer.compare(b.getCapacity(), a.getCapacity()));
                         return Integer.compare(b.getCapacity(), a.getCapacity());
                     }
                 })
