@@ -1,4 +1,8 @@
 1,Burger,20.0,Main Course
 2,Orange,5.0,Drinks
-3,Salte,3.0,Appetizer
 4,Cake,10.0,Dessert
+5,Fise,15.0,Main Course
+7,Creab,15.0,Dessert
+8,Rice,15.0,Main Course
+11,Salte,10.0,Appetizer
+12,Caca Cola,5.0,Drinks
