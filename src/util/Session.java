@@ -20,4 +20,17 @@ public class Session {
     public static void setCurrentUser(User currentUser) {
         Session.currentUser = currentUser;
     }
+    
+    public static int getUserId() {
+        return currentUser != null ? currentUser.getId() : -1;
+    }
+
+    
+    public static boolean isLoggedIn() {
+        return currentUser != null;
+    }
+
+    public static void clear() {
+        currentUser = null;
+    }
 }

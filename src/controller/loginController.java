@@ -22,7 +22,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import model.User;
 import util.AlertUtil;
-import util.FileUtil;
 import util.HashUtil;
 import util.Session;
 import dao.UserDAO;
@@ -66,28 +65,19 @@ public class loginController implements Initializable {
             AlertUtil.showError("Login Error", "Invalid email format.");
             return;
         }
-//        //To read saved users from the data file.
-//        List<User> users = FileUtil.loadUsers();
-//        //Searching for a user by email
-//        User foundUser = null;
-//        for (User user : users) {
-//            if (user.getEmail().equalsIgnoreCase(email)) {
-//                foundUser = user;
-//                break;
-//            }
-//        }
 
         User foundUser;
 
         try {
             foundUser = UserDAO.findByEmail(email);
         } catch (SQLException e) {
+            e.printStackTrace();
             AlertUtil.showError("Database Error", "Database connection failed.");
             return;
         }
-        
+
         //If the account does not exist
-        if (foundUser == null) {
+        if (foundUser == null ||foundUser.getPasswordHash() == null) {
             AlertUtil.showError("Login Error", "Account does not exist.");
             return;
         }
@@ -100,6 +90,10 @@ public class loginController implements Initializable {
         }
         //Save the current user in Session
         Session.setCurrentUser(foundUser);
+        if (!Session.isLoggedIn()) {
+            AlertUtil.showError("Error", "Session failed to start.");
+            return;
+        }
         AlertUtil.showInfo("Success", "Login successful.");
 
         //Open a page Dashboard.fxml
@@ -108,7 +102,9 @@ public class loginController implements Initializable {
 
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setScene(scene);
+        stage.centerOnScreen();
         stage.show();
+        
 
     }
 

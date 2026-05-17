@@ -5,11 +5,21 @@ public class RestaurantTable {
     private int id;
     private int tableNumber;
     private int capacity;
+    private int userId;
     //Constructors
-    public RestaurantTable(int id, int tableNumber, int capacity) {
+    public RestaurantTable(int id, int tableNumber, int capacity ,int userId) {
         this.id = id;
         this.tableNumber = tableNumber;
         this.capacity = capacity;
+        this.userId = userId;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     //Getters&Setters
@@ -39,7 +49,7 @@ public class RestaurantTable {
     //To convert the RestaurantTable object into a line 
     @Override
     public String toString() {
-        return id + "," + tableNumber + "," + capacity;
+        return id + "," + tableNumber + "," + capacity + "," + userId;
     }
      //To read the text line from the file and convert it into an RestaurantTable object.
     public static RestaurantTable fromString(String line){
@@ -50,7 +60,8 @@ public class RestaurantTable {
         return new RestaurantTable(
                 Integer.parseInt(p[0]),
                 Integer.parseInt(p[1]),
-                Integer.parseInt(p[2])
+                Integer.parseInt(p[2]),
+                Integer.parseInt(p[3])
         );
     }
 }

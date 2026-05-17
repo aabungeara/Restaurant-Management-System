@@ -11,22 +11,22 @@ import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import model.RestaurantTable;
 import util.AlertUtil;
-import util.FileUtil;
 import dao.TableDAO;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import javafx.collections.ObservableList;
+import javafx.scene.control.Label;
+import util.SceneUtil;
+import util.Session;
 
 /**
  * FXML Controller class
@@ -63,13 +63,15 @@ public class TablesController implements Initializable {
     @Override
     //to load data in open table scene 
     public void initialize(URL url, ResourceBundle rb) {
-        FileUtil.ensureFiles();
-
+        System.out.println("USER ID = " + Session.getUserId());
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         tableNumberColumn.setCellValueFactory(new PropertyValueFactory<>("tableNumber"));
         capacityColumn.setCellValueFactory(new PropertyValueFactory<>("capacity"));
+        
+        tableView.setPlaceholder(new Label("No tables found"));
 
         loadTableData();
+
         //fills sortByCapacity item
         sortByCapacity.setItems(FXCollections.observableArrayList(
                 "Capacity Low to High",
@@ -92,14 +94,20 @@ public class TablesController implements Initializable {
     }
 
     private void loadTableData() {
-//        tables = FileUtil.loadTables();
-//        tableView.setItems(FXCollections.observableArrayList(tables));
-
         try {
-            tables = TableDAO.getAllTables();
-            tableView.setItems(FXCollections.observableArrayList(tables));
+            tables = TableDAO.getAllTables(Session.getUserId());
+
+            if (tables == null) {
+                tables = new ArrayList<>();
+            }
+
+            applyFilterAndSort();
+
         } catch (SQLException e) {
-            AlertUtil.showError("Database Error", "Failed to load tables from database.");
+            AlertUtil.showError(
+                    "Database Error",
+                    "Failed to load tables from database."
+            );
         }
     }
 
@@ -127,47 +135,25 @@ public class TablesController implements Initializable {
             AlertUtil.showError("Validation Error", "Values must be greater than zero.");
             return;
         }
-        // to prevent repeat table number 
-        for (RestaurantTable table : tables) {
-            if (table.getTableNumber() == tableNumber
-                    && (selectedTable == null || table.getId() != selectedTable.getId())) {
-                AlertUtil.showError("Validation Error", "Duplicate table number.");
-                return;
-            }
-        }
-//        // add to table 
-//        if (selectedTable == null) {
-//            int newId = FileUtil.getNextTableId(tables);
-//            RestaurantTable newTable = new RestaurantTable(newId, tableNumber, capacity);
-//            tables.add(newTable);
-//            AlertUtil.showInfo("Success", "Table added successfully.");
-//        } else {
-//            //edit row from table view
-//            selectedTable.setTableNumber(tableNumber);
-//            selectedTable.setCapacity(capacity);
-//            AlertUtil.showInfo("Success", "Table updated successfully.");
-//            selectedTable = null;
-//            addEditBtn.setText("Add Table");
-//        }
 
         try {
             // Add new table
             if (selectedTable == null) {
 
-                if (TableDAO.tableNumberExists(tableNumber, 0)) {
+                if (TableDAO.tableNumberExists(tableNumber, 0, Session.getUserId())) {
                     AlertUtil.showError("Validation Error", "Duplicate table number.");
                     return;
                 }
 
-                RestaurantTable newTable = new RestaurantTable(0, tableNumber, capacity);
-                TableDAO.insertTable(newTable);
+                RestaurantTable newTable = new RestaurantTable(0, tableNumber, capacity, Session.getUserId());
+                TableDAO.insertTable(newTable, Session.getUserId());
 
                 AlertUtil.showInfo("Success", "Table added successfully.");
 
             } // Edit selected table
             else {
 
-                if (TableDAO.tableNumberExists(tableNumber, selectedTable.getId())) {
+                if (TableDAO.tableNumberExists(tableNumber, selectedTable.getId(), Session.getUserId())) {
                     AlertUtil.showError("Validation Error", "Duplicate table number.");
                     return;
                 }
@@ -175,7 +161,7 @@ public class TablesController implements Initializable {
                 selectedTable.setTableNumber(tableNumber);
                 selectedTable.setCapacity(capacity);
 
-                TableDAO.updateTable(selectedTable);
+                TableDAO.updateTable(selectedTable, Session.getUserId());
 
                 selectedTable = null;
                 addEditBtn.setText("Add Table");
@@ -193,18 +179,14 @@ public class TablesController implements Initializable {
             applyFilterAndSort();
 
         } catch (SQLException e) {
+            e.printStackTrace();
             AlertUtil.showError("Database Error", "Failed to save table data.");
         }
     }
 
     @FXML
     private void backToDashboard(ActionEvent event) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dashboard.fxml"));
-        Scene scene = new Scene(loader.load());
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(scene);
-        stage.show();
+        SceneUtil.switchScene(event, "/view/dashboard.fxml");
     }
 
     private void clearFields() {
@@ -237,12 +219,8 @@ public class TablesController implements Initializable {
                     }
                 })
                 .toList();
-
-        if (!searchText.isEmpty() && result.isEmpty()) {
-            AlertUtil.showWarning("No Results", "No table found with this number.");
-        }
-
         tableView.setItems(FXCollections.observableArrayList(result));
+
     }
 
 }

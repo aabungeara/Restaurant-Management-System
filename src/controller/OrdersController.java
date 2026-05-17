@@ -7,27 +7,25 @@ import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import model.MenuItem;
 import model.Order;
 import model.RestaurantTable;
-
 import javafx.scene.control.TableCell;
 import util.AlertUtil;
 import dao.OrderDAO;
 import dao.TableDAO;
 import dao.MenuItemDAO;
 import java.sql.SQLException;
+import javafx.collections.ObservableList;
+import util.SceneUtil;
+import util.Session;
 
 /**
  * FXML Controller class
@@ -59,7 +57,7 @@ public class OrdersController implements Initializable {
     @FXML
     private TableColumn<Order, String> statusColumn;
 
-    private List<Order> orders;
+    private ObservableList<Order> orders = FXCollections.observableArrayList();
     private List<RestaurantTable> tables;
     private List<MenuItem> menuItems;
     @FXML
@@ -78,8 +76,8 @@ public class OrdersController implements Initializable {
 
         //Loading tables and items
         try {
-            tables = TableDAO.getAllTables();
-            menuItems = MenuItemDAO.getAllMenuItems();
+            tables = TableDAO.getAllTables(Session.getUserId());
+            menuItems = MenuItemDAO.getAllMenuItems(Session.getUserId());
 
             for (RestaurantTable table : tables) {
                 tableBox.getItems().add("Table " + table.getTableNumber() + " (ID: " + table.getId() + ")");
@@ -94,7 +92,7 @@ public class OrdersController implements Initializable {
         } catch (SQLException e) {
             AlertUtil.showError("Database Error", "Failed to load tables or menu items.");
         }
-        
+
         //Fill statusBox
         statusBox.setItems(FXCollections.observableArrayList(
                 "Pending", "Preparing", "Served"
@@ -194,10 +192,12 @@ public class OrdersController implements Initializable {
 
     private void loadOrdersData() {
         try {
-            orders = OrderDAO.getAllOrders();
-            tableView.setItems(FXCollections.observableArrayList(orders));
+            orders.setAll(OrderDAO.getAllOrders(Session.getUserId()));
+            applyFilterAndSort();
         } catch (SQLException e) {
+            e.printStackTrace();
             AlertUtil.showError("Database Error", "Failed to load orders from database.");
+            orders.clear();
         }
     }
 
@@ -235,8 +235,8 @@ public class OrdersController implements Initializable {
             int itemId = extractId(selectedItem);
 
             if (selectedOrder == null) {
-                Order newOrder = new Order(0, tableId, itemId, quantity, status);
-                OrderDAO.insertOrder(newOrder);
+                Order newOrder = new Order(0, tableId, itemId, quantity, status, Session.getUserId());
+                OrderDAO.insertOrder(newOrder, Session.getUserId());
 
                 AlertUtil.showInfo("Success", "Order added successfully.");
             } else {
@@ -245,7 +245,7 @@ public class OrdersController implements Initializable {
                 selectedOrder.setQuantity(quantity);
                 selectedOrder.setStatus(status);
 
-                OrderDAO.updateOrder(selectedOrder);
+                OrderDAO.updateOrder(selectedOrder, Session.getUserId());
 
                 selectedOrder = null;
                 addOrderBtn.setText("Add Order");
@@ -255,7 +255,6 @@ public class OrdersController implements Initializable {
 
             loadOrdersData();
             clearFields();
-            applyFilterAndSort();
 
         } catch (SQLException e) {
             AlertUtil.showError("Database Error",
@@ -266,12 +265,7 @@ public class OrdersController implements Initializable {
 
     @FXML
     private void backToDashboard(ActionEvent event) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dashboard.fxml"));
-        Scene scene = new Scene(loader.load());
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(scene);
-        stage.show();
+        SceneUtil.switchScene(event, "/view/dashboard.fxml");
 
     }
 
@@ -298,13 +292,12 @@ public class OrdersController implements Initializable {
         }
 
         try {
-            OrderDAO.deleteOrder(selected.getId());
+            OrderDAO.deleteOrder(selected.getId(), Session.getUserId());
 
             loadOrdersData();
             clearFields();
             selected = null;
             addOrderBtn.setText("Add Order");
-            applyFilterAndSort();
 
             AlertUtil.showInfo("Success", "Order deleted successfully.");
 
@@ -352,9 +345,7 @@ public class OrdersController implements Initializable {
                     }
                 })
                 .toList();
-        if (!tableNumberText.isEmpty() && result.isEmpty()) {
-            AlertUtil.showWarning("No Results", "No Order found with this table Number.");
-        }
+        
 
         tableView.setItems(FXCollections.observableArrayList(result));
     }

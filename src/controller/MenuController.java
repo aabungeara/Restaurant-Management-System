@@ -23,6 +23,9 @@ import model.MenuItem;
 import util.AlertUtil;
 import dao.MenuItemDAO;
 import java.sql.SQLException;
+import javafx.scene.control.Label;
+import util.SceneUtil;
+import util.Session;
 
 public class MenuController implements Initializable {
 
@@ -138,19 +141,19 @@ public class MenuController implements Initializable {
         try {
             if (selectedItem == null) {
 
-                if (MenuItemDAO.menuItemNameExists(name, 0)) {
+                if (MenuItemDAO.menuItemNameExists(name, 0, Session.getUserId())) {
                     AlertUtil.showError("Validation Error", "Duplicate item name.");
                     return;
                 }
 
-                MenuItem newItem = new MenuItem(0, name, price, category);
-                MenuItemDAO.insertMenuItem(newItem);
+                MenuItem newItem = new MenuItem(0, name, price, category, Session.getUserId());
+                MenuItemDAO.insertMenuItem(newItem, Session.getUserId());
 
                 AlertUtil.showInfo("Success", "Menu item added successfully.");
 
             } else {
 
-                if (MenuItemDAO.menuItemNameExists(name, selectedItem.getId())) {
+                if (MenuItemDAO.menuItemNameExists(name, selectedItem.getId(), Session.getUserId())) {
                     AlertUtil.showError("Validation Error", "Duplicate item name.");
                     return;
                 }
@@ -159,7 +162,7 @@ public class MenuController implements Initializable {
                 selectedItem.setPrice(price);
                 selectedItem.setCategory(category);
 
-                MenuItemDAO.updateMenuItem(selectedItem);
+                MenuItemDAO.updateMenuItem(selectedItem, Session.getUserId());
 
                 selectedItem = null;
                 addEditBtn.setText("Add Menu Item");
@@ -167,9 +170,9 @@ public class MenuController implements Initializable {
                 AlertUtil.showInfo("Success", "Menu item updated successfully.");
             }
 
-            loadMenuData();
+            loadMenuData();items = MenuItemDAO.getAllMenuItems(Session.getUserId());
             clearFields();
-            applyFilterAndSort();
+            
 
         } catch (SQLException e) {
             AlertUtil.showError("Database Error", "Failed to save menu item data.");
@@ -178,12 +181,7 @@ public class MenuController implements Initializable {
 
     @FXML
     private void backToDashboard(ActionEvent event) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dashboard.fxml"));
-        Scene scene = new Scene(loader.load());
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(scene);
-        stage.show();
+        SceneUtil.switchScene(event, "/view/dashboard.fxml");
     }
 
     private void clearFields() {
@@ -195,8 +193,8 @@ public class MenuController implements Initializable {
 
     private void loadMenuData() {
         try {
-            items = MenuItemDAO.getAllMenuItems();
-            tableView.setItems(FXCollections.observableArrayList(items));
+            items = MenuItemDAO.getAllMenuItems(Session.getUserId());
+            applyFilterAndSort();
         } catch (SQLException e) {
             AlertUtil.showError("Database Error", "Failed to load menu items from database.");
         }
@@ -212,13 +210,13 @@ public class MenuController implements Initializable {
         }
 
         try {
-            MenuItemDAO.deleteMenuItem(selected.getId());
+            MenuItemDAO.deleteMenuItem(selected.getId(), Session.getUserId());
 
             loadMenuData();
             clearFields();
             selectedItem = null;
             addEditBtn.setText("Add Menu Item");
-            applyFilterAndSort();
+            
 
             AlertUtil.showInfo("Success", "Menu item deleted successfully.");
 
@@ -262,10 +260,7 @@ public class MenuController implements Initializable {
                     }
                 })
                 .toList();
-        if (!searchText.isEmpty() && result.isEmpty()) {
-            AlertUtil.showWarning("No Results", "No Menu found with this item.");
-        }
-
+        
         tableView.setItems(FXCollections.observableArrayList(result));
     }
 

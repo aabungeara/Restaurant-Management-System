@@ -10,14 +10,16 @@ public class Order {
     //to display
     private int tableNumber;
     private String itemName;
+    private int userId;
 
     //Constructors
-    public Order(int id, int tableId, int itemId, int quantity, String status) {
+    public Order(int id, int tableId, int itemId, int quantity, String status, int userId) {
         this.id = id;
         this.tableId = tableId;
         this.itemId = itemId;
         this.quantity = quantity;
         this.status = status;
+        this.userId = userId;
     }
     //Getters&Setters
     public int getTableNumber() {
@@ -76,10 +78,20 @@ public class Order {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+    
+    
     //To convert the Order object into a line 
     @Override
     public String toString() {
-        return id + "," + tableId + "," + itemId + "," + quantity + "," + status;
+        return id + "," + tableId + "," + itemId + "," + quantity + "," + status + "," + userId;
     }
     //To read the text line from the file and convert it into an Order object.
     public static Order fromString(String line) {
@@ -94,7 +106,8 @@ public class Order {
                 Integer.parseInt(p[1]),
                 Integer.parseInt(p[2]),
                 Integer.parseInt(p[3]),
-                p[4]
+                p[4],
+                Integer.parseInt(p[5])
         );
     }
 }
