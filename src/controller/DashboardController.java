@@ -40,7 +40,6 @@ public class DashboardController implements Initializable {
 
     @FXML
     private void goToTables(ActionEvent event) throws IOException {
-        System.out.println(Session.getUserId());
         SceneUtil.switchScene(event, "/view/tables.fxml");
     }
 

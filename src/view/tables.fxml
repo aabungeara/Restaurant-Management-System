@@ -29,7 +29,7 @@
                     <TextField fx:id="capacityField" promptText="Capacity" styleClass="input-field" stylesheets="@../style/style.css" />
 
                     <Button fx:id="addEditBtn" onAction="#handleAddOrEditTable" styleClass="main-button" stylesheets="@../style/style.css" text="Add Table" />
-
+                    <Button onAction="#handleDeleteMenuItem" styleClass="danger-button" text="Delete Selected" />
                     <Button onAction="#backToDashboard" styleClass="secondary-button" stylesheets="@../style/style.css" text="Back to Dashboard" />
                 </VBox>
 

@@ -11,19 +11,12 @@ import java.util.ResourceBundle;
 import java.util.regex.Pattern;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
-import model.User;
 import util.AlertUtil;
-//import util.FileUtil;
-import util.HashUtil;
-import dao.UserDAO;
 import java.sql.SQLException;
+import service.UserService;
 import util.SceneUtil;
 
 /**
@@ -31,80 +24,69 @@ import util.SceneUtil;
  *
  * @author hp
  */
-public class SignUpController implements Initializable {
+  
 
-    @FXML
-    private TextField firstNameField;
-    @FXML
-    private TextField lastNameField;
-    @FXML
-    private TextField emailField;
-    @FXML
-    private PasswordField passwordField;
-    @FXML
-    private PasswordField confirmPasswordField;
+    public class SignUpController implements Initializable {
 
-    /**
-     * Initializes the controller class.
-     */
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        // TODO
-    }
+        @FXML
+        private TextField firstNameField;
+        @FXML
+        private TextField lastNameField;
+        @FXML
+        private TextField emailField;
+        @FXML
+        private PasswordField passwordField;
+        @FXML
+        private PasswordField confirmPasswordField;
 
-    @FXML
-    private void handleSignUp(ActionEvent event) throws IOException {
-//        FileUtil.ensureFiles();
-        //Read values ​​from fields
-        String firstName = firstNameField.getText().trim();
-        String lastName = lastNameField.getText().trim();
-        String email = emailField.getText().trim();
-        String password = passwordField.getText().trim();
-        String confirmPassword = confirmPasswordField.getText().trim();
-
-        //Check for empty fields
-        if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty()
-                || password.isEmpty() || confirmPassword.isEmpty()) {
-            AlertUtil.showError("Validation Error", "Please fill in all fields.");
-            return;
-        }
-        //Check the email format
-        if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email)) {
-            AlertUtil.showError("Validation Error", "Invalid email format.");
-            return;
-        }
-        //Checking the password matches
-        if (!password.equals(confirmPassword)) {
-            AlertUtil.showError("Validation Error", "Passwords do not match.");
-            return;
+        /**
+         * Initializes the controller class.
+         */
+        @Override
+        public void initialize(URL url, ResourceBundle rb) {
+            // TODO
         }
 
-        try {
-            if (UserDAO.emailExists(email)) {
-                AlertUtil.showError("Validation Error", "Email already exists.");
+        @FXML
+        private void handleSignUp(ActionEvent event) throws IOException {
+            //Read values ​​from fields
+            String firstName = firstNameField.getText().trim();
+            String lastName = lastNameField.getText().trim();
+            String email = emailField.getText().trim();
+            String password = passwordField.getText().trim();
+            String confirmPassword = confirmPasswordField.getText().trim();
+
+            //Check for empty fields
+            if (firstName.isEmpty() || lastName.isEmpty() || email.isEmpty()
+                    || password.isEmpty() || confirmPassword.isEmpty()) {
+                AlertUtil.showError("Validation Error", "Please fill in all fields.");
+                return;
+            }
+            //Check the email format
+            if (!Pattern.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", email)) {
+                AlertUtil.showError("Validation Error", "Invalid email format.");
+                return;
+            }
+            //Checking the password matches
+            if (!password.equals(confirmPassword)) {
+                AlertUtil.showError("Validation Error", "Passwords do not match.");
                 return;
             }
 
-            String passwordHash = HashUtil.md5(password);
+            UserService userService = new UserService();
 
-            User newUser = new User(0, firstName, lastName, email, passwordHash);
+            boolean success = userService.register(firstName, lastName, email, password);
 
-            UserDAO.insertUser(newUser);
+            if (!success) {
+                AlertUtil.showError("Error", "Email already exists or registration failed.");
+                return;
+            }
+
             AlertUtil.showInfo("Success", "Account created successfully.");
-            
+            //Open login page
+            SceneUtil.switchScene(event, "/view/login.fxml");
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            AlertUtil.showError("Database Error", "Could not create account.");
-            return;
         }
-
-        
-       
-        //Open login page
-        SceneUtil.switchScene(event, "/view/login.fxml");
-
-    }
 
     @FXML
     private void goToLogin(ActionEvent event) throws IOException {

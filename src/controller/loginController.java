@@ -6,26 +6,20 @@ package controller;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
-import javafx.stage.Stage;
 import model.User;
 import util.AlertUtil;
-import util.HashUtil;
 import util.Session;
-import dao.UserDAO;
-import java.sql.SQLException;
+import service.UserService;
+import util.SceneUtil;
 
 /**
  *
@@ -55,69 +49,39 @@ public class loginController implements Initializable {
         //Read email and password
         String email = emailField.getText().trim();
         String password = passwordField.getText().trim();
+        
         //Check that the fields are not empty
         if (email.isEmpty() || password.isEmpty()) {
             AlertUtil.showError("Login Error", "Please fill in all fields.");
             return;
         }
+        
         //Checks the email format
         if (!email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             AlertUtil.showError("Login Error", "Invalid email format.");
             return;
         }
 
-        User foundUser;
-
-        try {
-            foundUser = UserDAO.findByEmail(email);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            AlertUtil.showError("Database Error", "Database connection failed.");
-            return;
-        }
+        UserService userService = new UserService();
+        User foundUser = userService.login(email, password);
 
         //If the account does not exist
-        if (foundUser == null ||foundUser.getPasswordHash() == null) {
-            AlertUtil.showError("Login Error", "Account does not exist.");
+        if (foundUser == null) {
+            AlertUtil.showError("Login Error", "Invalid email or password.");
             return;
         }
-        //Encrypting the entered password
-        String hashedPassword = HashUtil.md5(password);
-        //If the encrypted password does not match the stored value
-        if (!foundUser.getPasswordHash().equals(hashedPassword)) {
-            AlertUtil.showError("Login Error", "Incorrect password.");
-            return;
-        }
-        //Save the current user in Session
         Session.setCurrentUser(foundUser);
-        if (!Session.isLoggedIn()) {
-            AlertUtil.showError("Error", "Session failed to start.");
-            return;
-        }
+
         AlertUtil.showInfo("Success", "Login successful.");
 
-        //Open a page Dashboard.fxml
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/dashboard.fxml"));
-        Scene scene = new Scene(loader.load());
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(scene);
-        stage.centerOnScreen();
-        stage.show();
-        
+        SceneUtil.switchScene(event, "/view/dashboard.fxml");
 
     }
 
     //Open a page signUp.fxml
     @FXML
     private void signUpBut(ActionEvent event) throws IOException {
-
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/signUp.fxml"));
-        Scene scene = new Scene(loader.load());
-
-        Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        stage.setScene(scene);
-        stage.show();
+        SceneUtil.switchScene(event, "/view/signUp.fxml");
     }
 
 }

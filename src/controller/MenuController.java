@@ -7,10 +7,7 @@ import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableCell;
@@ -18,12 +15,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import model.MenuItem;
 import util.AlertUtil;
-import dao.MenuItemDAO;
+import repositories.MenuItemRepo;
 import java.sql.SQLException;
-import javafx.scene.control.Label;
+import java.util.ArrayList;
+import model.User;
+import service.MenuService;
 import util.SceneUtil;
 import util.Session;
 
@@ -37,6 +35,7 @@ public class MenuController implements Initializable {
     private ComboBox<String> categoryBox;
     @FXML
     private Button addEditBtn;
+    
     @FXML
     private TableView<MenuItem> tableView;
     @FXML
@@ -47,15 +46,18 @@ public class MenuController implements Initializable {
     private TableColumn<MenuItem, Double> priceColumn;
     @FXML
     private TableColumn<MenuItem, String> categoryColumn;
+    
     @FXML
     private TextField searchField;
-    private List<MenuItem> items;
+    private List<MenuItem> items = new ArrayList<>();;
     private MenuItem selectedItem = null;
 
     @FXML
     private ComboBox<String> categoryFilterBox;
     @FXML
     private ComboBox<String> sortPriceBox;
+    
+    private final MenuService menuService = new MenuService();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -116,7 +118,7 @@ public class MenuController implements Initializable {
     }
 
     @FXML
-    private void handleAddOrEditMenuItem(ActionEvent event) {
+    private void handleAddOrEditMenuItem(ActionEvent event) throws Exception {
         String name = nameField.getText().trim();
         String priceText = priceField.getText().trim();
         String category = categoryBox.getValue();
@@ -141,20 +143,21 @@ public class MenuController implements Initializable {
         try {
             if (selectedItem == null) {
 
-                if (MenuItemDAO.menuItemNameExists(name, 0, Session.getUserId())) {
-                    AlertUtil.showError("Validation Error", "Duplicate item name.");
+                if (menuService.exists(name, 0)) {
+                    AlertUtil.showError("Error", "Duplicate item name");
                     return;
                 }
+                 User user = Session.getCurrentUser();
+                MenuItem item = new MenuItem(name, price, category, user);
+                menuService.add(item);
 
-                MenuItem newItem = new MenuItem(0, name, price, category, Session.getUserId());
-                MenuItemDAO.insertMenuItem(newItem, Session.getUserId());
 
                 AlertUtil.showInfo("Success", "Menu item added successfully.");
 
             } else {
 
-                if (MenuItemDAO.menuItemNameExists(name, selectedItem.getId(), Session.getUserId())) {
-                    AlertUtil.showError("Validation Error", "Duplicate item name.");
+                 if (menuService.exists(name, selectedItem.getId())) {
+                    AlertUtil.showError("Error", "Duplicate item name");
                     return;
                 }
 
@@ -162,7 +165,7 @@ public class MenuController implements Initializable {
                 selectedItem.setPrice(price);
                 selectedItem.setCategory(category);
 
-                MenuItemDAO.updateMenuItem(selectedItem, Session.getUserId());
+                menuService.update(selectedItem);
 
                 selectedItem = null;
                 addEditBtn.setText("Add Menu Item");
@@ -170,10 +173,8 @@ public class MenuController implements Initializable {
                 AlertUtil.showInfo("Success", "Menu item updated successfully.");
             }
 
-            loadMenuData();items = MenuItemDAO.getAllMenuItems(Session.getUserId());
+            loadMenuData();
             clearFields();
-            
-
         } catch (SQLException e) {
             AlertUtil.showError("Database Error", "Failed to save menu item data.");
         }
@@ -192,16 +193,16 @@ public class MenuController implements Initializable {
     }
 
     private void loadMenuData() {
-        try {
-            items = MenuItemDAO.getAllMenuItems(Session.getUserId());
+         try {
+            items = menuService.getItems();
             applyFilterAndSort();
-        } catch (SQLException e) {
-            AlertUtil.showError("Database Error", "Failed to load menu items from database.");
+        } catch (Exception e) {
+            AlertUtil.showError("Error", "Failed to load menu items");
         }
     }
 
     @FXML
-    private void handleDeleteMenuItem(ActionEvent event) {
+    private void handleDeleteMenuItem(ActionEvent event) throws Exception {
         MenuItem selected = tableView.getSelectionModel().getSelectedItem();
 
         if (selected == null) {
@@ -210,7 +211,7 @@ public class MenuController implements Initializable {
         }
 
         try {
-            MenuItemDAO.deleteMenuItem(selected.getId(), Session.getUserId());
+            menuService.delete(selected.getId());
 
             loadMenuData();
             clearFields();

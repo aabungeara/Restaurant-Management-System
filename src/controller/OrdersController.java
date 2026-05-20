@@ -19,11 +19,11 @@ import model.Order;
 import model.RestaurantTable;
 import javafx.scene.control.TableCell;
 import util.AlertUtil;
-import dao.OrderDAO;
-import dao.TableDAO;
-import dao.MenuItemDAO;
 import java.sql.SQLException;
 import javafx.collections.ObservableList;
+import service.MenuService;
+import service.OrderService;
+import service.TableService;
 import util.SceneUtil;
 import util.Session;
 
@@ -51,7 +51,7 @@ public class OrdersController implements Initializable {
     @FXML
     private TableColumn<Order, Integer> tableNumberColumn;
     @FXML
-    private TableColumn<Order, Integer> itemNameColumn;
+    private TableColumn<Order, String> itemNameColumn;
     @FXML
     private TableColumn<Order, Integer> quantityColumn;
     @FXML
@@ -68,6 +68,10 @@ public class OrdersController implements Initializable {
     private ComboBox<String> sortOrderBox;
     private Order selectedOrder = null;
 
+    private final OrderService orderService = new OrderService();
+    private final TableService tableService = new TableService();
+    private final MenuService menuItemService = new MenuService();
+
     /**
      * Initializes the controller class.
      */
@@ -76,8 +80,8 @@ public class OrdersController implements Initializable {
 
         //Loading tables and items
         try {
-            tables = TableDAO.getAllTables(Session.getUserId());
-            menuItems = MenuItemDAO.getAllMenuItems(Session.getUserId());
+            tables = tableService.getUserTables();
+            menuItems = menuItemService.getItems();
 
             for (RestaurantTable table : tables) {
                 tableBox.getItems().add("Table " + table.getTableNumber() + " (ID: " + table.getId() + ")");
@@ -89,7 +93,7 @@ public class OrdersController implements Initializable {
                 );
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             AlertUtil.showError("Database Error", "Failed to load tables or menu items.");
         }
 
@@ -119,8 +123,21 @@ public class OrdersController implements Initializable {
 
         //Linking table columns to properties
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
-        tableNumberColumn.setCellValueFactory(new PropertyValueFactory<>("tableNumber"));
-        itemNameColumn.setCellValueFactory(new PropertyValueFactory<>("itemName"));
+        tableNumberColumn.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleIntegerProperty(
+                        cellData.getValue()
+                                .getTable()
+                                .getTableNumber()
+                ).asObject()
+        );
+
+        itemNameColumn.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(
+                        cellData.getValue()
+                                .getItem()
+                                .getName()
+                )
+        );
         quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
 //        Color the status column
@@ -161,14 +178,14 @@ public class OrdersController implements Initializable {
             if (selectedOrder != null) {
 
                 for (String tableText : tableBox.getItems()) {
-                    if (extractId(tableText) == selectedOrder.getTableId()) {
+                    if (extractId(tableText) == selectedOrder.getTable().getId()) {
                         tableBox.setValue(tableText);
                         break;
                     }
                 }
 
                 for (String itemText : itemBox.getItems()) {
-                    if (extractId(itemText) == selectedOrder.getItemId()) {
+                    if (extractId(itemText) == selectedOrder.getItem().getId()) {
                         itemBox.setValue(itemText);
                         break;
                     }
@@ -191,14 +208,13 @@ public class OrdersController implements Initializable {
     }
 
     private void loadOrdersData() {
-        try {
-            orders.setAll(OrderDAO.getAllOrders(Session.getUserId()));
-            applyFilterAndSort();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            AlertUtil.showError("Database Error", "Failed to load orders from database.");
-            orders.clear();
-        }
+        orders.setAll(
+                orderService.getOrders(
+                        Session.getCurrentUser()
+                )
+        );
+
+        applyFilterAndSort();
     }
 
     @FXML
@@ -234,18 +250,34 @@ public class OrdersController implements Initializable {
             int tableId = extractId(selectedTable);
             int itemId = extractId(selectedItem);
 
+            RestaurantTable table = tables.stream()
+                    .filter(t -> t.getId() == tableId)
+                    .findFirst()
+                    .orElse(null);
+
+            MenuItem item = menuItems.stream()
+                    .filter(i -> i.getId() == itemId)
+                    .findFirst()
+                    .orElse(null);
+
+            Order order = new Order();
+
+            order.setTable(table);
+            order.setItem(item);
+            order.setQuantity(quantity);
+            order.setStatus(statusBox.getValue());
+
             if (selectedOrder == null) {
-                Order newOrder = new Order(0, tableId, itemId, quantity, status, Session.getUserId());
-                OrderDAO.insertOrder(newOrder, Session.getUserId());
+                orderService.createOrder(order, Session.getCurrentUser());
 
                 AlertUtil.showInfo("Success", "Order added successfully.");
             } else {
-                selectedOrder.setTableId(tableId);
-                selectedOrder.setItemId(itemId);
+                selectedOrder.setTable(table);
+                selectedOrder.setItem(item);
                 selectedOrder.setQuantity(quantity);
                 selectedOrder.setStatus(status);
 
-                OrderDAO.updateOrder(selectedOrder, Session.getUserId());
+                orderService.updateOrder(selectedOrder, Session.getCurrentUser());
 
                 selectedOrder = null;
                 addOrderBtn.setText("Add Order");
@@ -292,11 +324,11 @@ public class OrdersController implements Initializable {
         }
 
         try {
-            OrderDAO.deleteOrder(selected.getId(), Session.getUserId());
+            orderService.deleteOrder(selected.getId(), Session.getCurrentUser());
 
             loadOrdersData();
             clearFields();
-            selected = null;
+            selectedOrder = null;
             addOrderBtn.setText("Add Order");
 
             AlertUtil.showInfo("Success", "Order deleted successfully.");
@@ -323,7 +355,7 @@ public class OrdersController implements Initializable {
                             || order.getStatus().equalsIgnoreCase(status);
 
                     boolean matchesTable = tableNumberText.isEmpty()
-                            || String.valueOf(order.getTableNumber()).contains(tableNumberText);
+                            || String.valueOf(order.getTable().getTableNumber()).contains(tableNumberText);
 
                     return matchesStatus && matchesTable;
                 })
@@ -345,7 +377,6 @@ public class OrdersController implements Initializable {
                     }
                 })
                 .toList();
-        
 
         tableView.setItems(FXCollections.observableArrayList(result));
     }

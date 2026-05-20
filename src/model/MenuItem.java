@@ -1,22 +1,42 @@
 package model;
 
-public class MenuItem {
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-    
+
+
+@Entity
+@Table(name = "menuitems")
+public class MenuItem {
     //Attribute
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
     private double price;
     private String category;
-    private int userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
     //Constructors
-    public MenuItem(int id, String name, double price, String category, int userId) {
-        this.id = id;
+
+    public MenuItem() {
+    }
+
+    public MenuItem(String name, double price, String category, User user) {
+
         this.name = name;
         this.price = price;
         this.category = category;
-        this.userId = userId;
+        this.user = user;
     }
+
     //Getters&Setters
     public int getId() {
         return id;
@@ -50,35 +70,24 @@ public class MenuItem {
         this.category = category;
     }
 
-    public int getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
-    
-    
-    
-    //To convert the MenuItem object into a line 
+
     @Override
     public String toString() {
-        return id + "," + name + "," + price + "," + category + "," + userId;
-    }
-     //To read the text line from the file and convert it into an MenuItem object.
-    public static MenuItem fromString(String line){
-        String p[] = line.split(",");
-        
-        if (p.length != 4) {
-            throw new IllegalArgumentException("Invalid menu item line: " + line);
-        }
-        
-        return new MenuItem(
-                Integer.parseInt(p[0]),
-                p[1],
-                Double.parseDouble(p[2]),
-                p[3],
-                Integer.parseInt(p[4])
-        );
+        StringBuilder sb = new StringBuilder();
+        sb.append("MenuItem{");
+        sb.append("id=").append(id);
+        sb.append(", name=").append(name);
+        sb.append(", price=").append(price);
+        sb.append(", category=").append(category);
+        sb.append(", userEmail=").append(user.getEmail());
+        sb.append('}');
+        return sb.toString();
     }
 }

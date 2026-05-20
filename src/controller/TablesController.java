@@ -20,11 +20,11 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import model.RestaurantTable;
 import util.AlertUtil;
-import dao.TableDAO;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
+import model.User;
+import service.TableService;
 import util.SceneUtil;
 import util.Session;
 
@@ -56,6 +56,7 @@ public class TablesController implements Initializable {
     private TextField searchField;
     @FXML
     private ComboBox<String> sortByCapacity;
+    private final TableService tableService = new TableService();
 
     /**
      * Initializes the controller class.
@@ -63,11 +64,10 @@ public class TablesController implements Initializable {
     @Override
     //to load data in open table scene 
     public void initialize(URL url, ResourceBundle rb) {
-        System.out.println("USER ID = " + Session.getUserId());
         idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
         tableNumberColumn.setCellValueFactory(new PropertyValueFactory<>("tableNumber"));
         capacityColumn.setCellValueFactory(new PropertyValueFactory<>("capacity"));
-        
+
         tableView.setPlaceholder(new Label("No tables found"));
 
         loadTableData();
@@ -95,7 +95,7 @@ public class TablesController implements Initializable {
 
     private void loadTableData() {
         try {
-            tables = TableDAO.getAllTables(Session.getUserId());
+            tables = tableService.getUserTables();
 
             if (tables == null) {
                 tables = new ArrayList<>();
@@ -103,16 +103,39 @@ public class TablesController implements Initializable {
 
             applyFilterAndSort();
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            AlertUtil.showError("Error", "Failed to load tables");
+        }
+    }
+    @FXML
+    private void handleDeleteMenuItem(ActionEvent event) throws Exception {
+        RestaurantTable selected = tableView.getSelectionModel().getSelectedItem();
+
+        if (selected == null) {
+            AlertUtil.showError("Delete Error", "Please select a menu item to delete.");
+            return;
+        }
+
+        try {
+            tableService.deleteTable(selected.getId());
+
+            loadTableData();
+            clearFields();
+            selectedTable = null;
+            addEditBtn.setText("Add Menu Item");
+            
+
+            AlertUtil.showInfo("Success", "Menu item deleted successfully.");
+
         } catch (SQLException e) {
-            AlertUtil.showError(
-                    "Database Error",
-                    "Failed to load tables from database."
-            );
+            AlertUtil.showError("Database Error",
+                    "Failed to delete menu item. It may be used by an order.");
         }
     }
 
     @FXML
-    private void handleAddOrEditTable(ActionEvent event) throws SQLException {
+    private void handleAddOrEditTable(ActionEvent event) throws SQLException, Exception {
         String tableNumberText = tableNumberField.getText().trim();
         String capacityText = capacityField.getText().trim();
 
@@ -140,20 +163,23 @@ public class TablesController implements Initializable {
             // Add new table
             if (selectedTable == null) {
 
-                if (TableDAO.tableNumberExists(tableNumber, 0, Session.getUserId())) {
+                if (tableService.isDuplicate(tableNumber, 0)) {
                     AlertUtil.showError("Validation Error", "Duplicate table number.");
                     return;
                 }
+                User user = Session.getCurrentUser();
 
-                RestaurantTable newTable = new RestaurantTable(0, tableNumber, capacity, Session.getUserId());
-                TableDAO.insertTable(newTable, Session.getUserId());
+                RestaurantTable newTable
+                        = new RestaurantTable(tableNumber, capacity, user);
+
+                tableService.addTable(newTable);
 
                 AlertUtil.showInfo("Success", "Table added successfully.");
 
             } // Edit selected table
             else {
 
-                if (TableDAO.tableNumberExists(tableNumber, selectedTable.getId(), Session.getUserId())) {
+                if (tableService.isDuplicate(tableNumber, selectedTable.getId())) {
                     AlertUtil.showError("Validation Error", "Duplicate table number.");
                     return;
                 }
@@ -161,7 +187,7 @@ public class TablesController implements Initializable {
                 selectedTable.setTableNumber(tableNumber);
                 selectedTable.setCapacity(capacity);
 
-                TableDAO.updateTable(selectedTable, Session.getUserId());
+                tableService.updateTable(selectedTable);
 
                 selectedTable = null;
                 addEditBtn.setText("Add Table");
@@ -174,9 +200,6 @@ public class TablesController implements Initializable {
 
             // Clear input fields
             clearFields();
-
-            // Apply current search/sort if exists
-            applyFilterAndSort();
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -222,5 +245,7 @@ public class TablesController implements Initializable {
         tableView.setItems(FXCollections.observableArrayList(result));
 
     }
+
+    
 
 }

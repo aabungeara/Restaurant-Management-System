@@ -1,25 +1,39 @@
 package model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+
+
+@Entity
+@Table(name = "tables")
 public class RestaurantTable {
+
     //Attribute
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+    @Column(name = "table_number")
     private int tableNumber;
     private int capacity;
-    private int userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
     //Constructors
-    public RestaurantTable(int id, int tableNumber, int capacity ,int userId) {
-        this.id = id;
+
+    public RestaurantTable() {
+    }
+
+    public RestaurantTable(int tableNumber, int capacity, User user) {
         this.tableNumber = tableNumber;
         this.capacity = capacity;
-        this.userId = userId;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
+        this.user = user;
     }
 
     //Getters&Setters
@@ -46,22 +60,25 @@ public class RestaurantTable {
     public void setCapacity(int capacity) {
         this.capacity = capacity;
     }
-    //To convert the RestaurantTable object into a line 
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
     @Override
     public String toString() {
-        return id + "," + tableNumber + "," + capacity + "," + userId;
+        StringBuilder sb = new StringBuilder();
+        sb.append("RestaurantTable{");
+        sb.append("id=").append(id);
+        sb.append(", tableNumber=").append(tableNumber);
+        sb.append(", capacity=").append(capacity);
+        sb.append(", userEmail=").append(user.getEmail());
+        sb.append('}');
+        return sb.toString();
     }
-     //To read the text line from the file and convert it into an RestaurantTable object.
-    public static RestaurantTable fromString(String line){
-        String p[] = line.split(",");
-        if (p.length != 3) {
-            throw new IllegalArgumentException("Invalid table line: " + line);
-        }
-        return new RestaurantTable(
-                Integer.parseInt(p[0]),
-                Integer.parseInt(p[1]),
-                Integer.parseInt(p[2]),
-                Integer.parseInt(p[3])
-        );
-    }
+
 }
