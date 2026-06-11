@@ -86,7 +86,7 @@ public class MenuItem {
         sb.append(", name=").append(name);
         sb.append(", price=").append(price);
         sb.append(", category=").append(category);
-        sb.append(", userEmail=").append(user.getEmail());
+        sb.append(", userEmail=").append(user != null ? user.getEmail() : "N/A");
         sb.append('}');
         return sb.toString();
     }

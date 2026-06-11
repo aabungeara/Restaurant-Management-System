@@ -23,6 +23,8 @@
                     <Button onAction="#goToTables" styleClass="nav-button" stylesheets="@../style/style.css" text="Tables" />
                     <Button onAction="#goToMenu" styleClass="nav-button" stylesheets="@../style/style.css" text="Menu" />
                     <Button onAction="#goToOrders" styleClass="nav-button" stylesheets="@../style/style.css" text="Orders" />
+                    <Button onAction="#goToBills" styleClass="nav-button" stylesheets="@../style/style.css" text="Bills" />
+                    <Button onAction="#goToReports" styleClass="nav-button" stylesheets="@../style/style.css" text="Reports" />
                     <Button onAction="#logout" styleClass="logout-button" stylesheets="@../style/style.css" text="Logout" />
                 </VBox>
             </left>

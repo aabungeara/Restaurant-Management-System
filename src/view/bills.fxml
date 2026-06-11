@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="650.0" prefWidth="930.0"
+            stylesheets="@../style/style.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.BillController">
+
+    <children>
+
+        <HBox prefHeight="650.0" prefWidth="930.0">
+
+            <children>
+
+                <VBox prefWidth="300.0"
+                      spacing="15.0"
+                      styleClass="form-panel">
+
+                    <padding>
+                        <Insets top="25"
+                                right="20"
+                                bottom="25"
+                                left="20"/>
+                    </padding>
+
+                    <Label text="Bills Management"
+                           styleClass="section-title"/>
+
+                    <ComboBox fx:id="tableBox"
+                              promptText="Select Table"
+                              styleClass="input-field"/>
+
+                    <TextField fx:id="totalField"
+                               editable="false"
+                               promptText="Total Amount"
+                               styleClass="input-field"/>
+
+                    <ComboBox fx:id="statusBox"
+                              promptText="Payment Status"
+                              styleClass="input-field"/>
+
+                    <Button fx:id="addBillBtn"
+                            text="Generate Bill"
+                            onAction="#handleAddBill"
+                            styleClass="main-button"/>
+
+                    <Button text="Delete Selected"
+                            onAction="#handleDeleteBill"
+                            styleClass="danger-button"/>
+                    
+                    <Button text="Print Bill"
+                            onAction="#handlePrintBill"
+                            styleClass="main-button"/>
+                    <ProgressIndicator fx:id="progressIndicator"
+                                       visible="false"/>
+
+                    <Label fx:id="statusLabel"
+                           text="Ready"
+                           style="-fx-text-fill: gray;"/>
+       
+                    <Button fx:id="cancelBtn"
+                            text="Cancel"
+                            onAction="#handleCancelTask"
+                            disable="true"
+                            styleClass="danger-button"/>
+
+                    <Button text="Back To Dashboard"
+                            onAction="#backToDashboard"
+                            styleClass="secondary-button"/>
+
+                </VBox>
+
+                <VBox prefWidth="630.0"
+                      spacing="15.0"
+                      styleClass="table-panel">
+
+                    <padding>
+                        <Insets top="25"
+                                right="20"
+                                bottom="25"
+                                left="20"/>
+                    </padding>
+
+                    <Label text="Restaurant Bills"
+                           styleClass="section-title"/>
+
+                    <HBox spacing="10">
+
+                        <TextField fx:id="searchTableField"
+                                   promptText="Search Table Number"
+                                   styleClass="input-field"
+                                   prefWidth="180"/>
+
+                        <ComboBox fx:id="filterStatusBox"
+                                  promptText="Filter Status"
+                                  prefWidth="150"/>
+
+                        <ComboBox fx:id="sortTotalBox"
+                                  promptText="Sort Total"
+                                  prefWidth="170"/>
+
+                    </HBox>
+
+                    <TableView fx:id="tableView" prefHeight="300.0">
+
+                        <columns>
+
+                            <TableColumn fx:id="idColumn"
+                                         text="ID"
+                                         prefWidth="80"/>
+
+                            <TableColumn fx:id="tableNumberColumn"
+                                         text="Table Number"
+                                         prefWidth="160"/>
+
+                            <TableColumn fx:id="totalColumn"
+                                         text="Total"
+                                         prefWidth="180"/>
+
+                            <TableColumn fx:id="statusColumn"
+                                         text="Status"
+                                         prefWidth="180"/>
+
+                        </columns>
+
+                    </TableView>
+                    <Label text="Bill Output"
+                           styleClass="section-title"/>
+
+                    <TextArea fx:id="billOutputArea"
+                              editable="false"
+                              wrapText="true"
+                              prefHeight="130.0"
+                              promptText="Bill details will appear here..."/>
+
+                </VBox>
+
+            </children>
+
+        </HBox>
+
+    </children>
+
+</AnchorPane>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane fx:id="rootPane"
+            xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.BillPreviewController"
+            prefHeight="500.0" prefWidth="400.0">
+
+    <children>
+
+        <VBox spacing="10"
+              layoutX="20"
+              layoutY="20"
+              prefWidth="360">
+
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- Header -->
+            <Label text="🍽 RESTAURANT BILL"
+                   style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+
+            <Separator/>
+
+            <!-- Bill Info -->
+            <Label fx:id="billIdLabel" text="Bill ID:"/>
+            <Label fx:id="tableLabel" text="Table:"/>
+            <Label fx:id="statusLabel" text="Status:"/>
+
+            <Separator/>
+
+            <!-- Items Table -->
+            <TableView fx:id="tableView" prefHeight="250">
+
+                <columns>
+
+                    <TableColumn fx:id="itemColumn" text="Item" prefWidth="140"/>
+                    <TableColumn fx:id="qtyColumn" text="Qty" prefWidth="60"/>
+                    <TableColumn fx:id="priceColumn" text="Price" prefWidth="80"/>
+                    <TableColumn fx:id="totalColumn" text="Total" prefWidth="80"/>
+
+                </columns>
+
+            </TableView>
+
+            <Separator/>
+
+            <!-- Total -->
+            <Label fx:id="totalLabel"
+                   text="TOTAL: $0.00"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+            <Separator/>
+
+            <!-- Buttons -->
+            <HBox spacing="10">
+
+                <Button text="🖨 Print"
+                        onAction="#handlePrint"/>
+
+                <Button text="📄 Export PDF"
+                        onAction="#handleExportPdf"/>
+
+                <Button text="❌ Close"
+                        onAction="#handleClose"/>
+
+            </HBox>
+
+        </VBox>
+
+    </children>
+
+</AnchorPane>

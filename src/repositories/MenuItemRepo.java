@@ -32,7 +32,8 @@ public class MenuItemRepo {
         try {
             em.getTransaction().begin();
 
-            item.getUser().setId(userId);
+            model.User user = em.find(model.User.class, userId);
+            item.setUser(user);
 
             em.persist(item);
 
@@ -44,7 +45,7 @@ public class MenuItemRepo {
                 em.getTransaction().rollback();
             }
 
-            e.printStackTrace();
+            throw new RuntimeException("Failed to insert menu item.", e);
 
         } finally {
             em.close();
@@ -130,6 +131,26 @@ public class MenuItemRepo {
                     .getSingleResult();
 
             return count > 0;
+
+        } finally {
+            em.close();
+        }
+    }
+
+    public static List<MenuItem> findByCategory(String category, int userId) {
+
+        EntityManager em = JPAUtil.getEntityManager();
+
+        try {
+            return em.createQuery(
+                    "SELECT m FROM MenuItem m "
+                    + "WHERE m.category = :category "
+                    + "AND m.user.id = :uid",
+                    MenuItem.class
+            )
+                    .setParameter("category", category)
+                    .setParameter("uid", userId)
+                    .getResultList();
 
         } finally {
             em.close();

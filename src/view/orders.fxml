@@ -1,72 +1,163 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ComboBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<AnchorPane prefHeight="520.0" prefWidth="930.0" stylesheets="@../style/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.OrdersController">
+<AnchorPane prefHeight="620.0" prefWidth="1000.0"
+            stylesheets="@../style/style.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.OrdersController">
 
     <children>
-        <HBox prefHeight="520.0" prefWidth="930.0">
+
+        <HBox prefHeight="620.0" prefWidth="1000.0">
 
             <children>
 
+                <!-- Left Form Panel -->
                 <VBox prefWidth="310.0" spacing="15.0" styleClass="form-panel">
+
                     <padding>
-                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0" />
+                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0"/>
                     </padding>
 
-                    <Label styleClass="section-title" text="Orders Management" />
+                    <Label styleClass="section-title" text="Orders Management"/>
 
-                    <ComboBox fx:id="tableBox" promptText="Select Table" styleClass="input-field" />
-                    <ComboBox fx:id="itemBox" promptText="Select Menu Item" styleClass="input-field" />
-                    <TextField fx:id="quantityField" promptText="Quantity" styleClass="input-field" />
-                    <ComboBox fx:id="statusBox" promptText="Select Status" styleClass="input-field" />
+                    <ComboBox fx:id="tableBox"
+                              promptText="Select Table"
+                              styleClass="input-field"/>
 
-                    <Button fx:id="addOrderBtn" onAction="#handleAddOrder" styleClass="main-button" text="Add Order" />
-                    <Button onAction="#handleDeleteOrder" styleClass="danger-button" text="Delete Selected" />
+                    <ComboBox fx:id="itemBox"
+                              promptText="Select Menu Item"
+                              styleClass="input-field"/>
 
-                    <Button onAction="#backToDashboard" styleClass="secondary-button" text="Back to Dashboard" />
+                    <TextField fx:id="quantityField"
+                               promptText="Quantity"
+                               styleClass="input-field"/>
+
+                    <ComboBox fx:id="statusBox"
+                              promptText="Select Status"
+                              styleClass="input-field"/>
+
+                    <Button fx:id="addOrderBtn"
+                            onAction="#handleAddOrder"
+                            styleClass="main-button"
+                            text="Add Order"/>
+
+                    <Button fx:id="deleteOrderBtn"
+                            onAction="#handleDeleteOrder"
+                            styleClass="danger-button"
+                            text="Delete Selected"/>
+
+                    <Separator/>
+
+                    <Button fx:id="refreshBtn"
+                            onAction="#handleRefreshOrders"
+                            styleClass="main-button"
+                            text="Refresh Orders"/>
+
+                    <Button fx:id="kitchenSummaryBtn"
+                            onAction="#handleGenerateKitchenSummary"
+                            styleClass="main-button"
+                            text="Generate Kitchen Summary"/>
+
+                    <Button fx:id="cancelTaskBtn"
+                            onAction="#handleCancelTask"
+                            styleClass="danger-button"
+                            text="Cancel"
+                            disable="true"/>
+
+                    <ProgressIndicator fx:id="progressIndicator"
+                                       visible="false"
+                                       prefWidth="45"
+                                       prefHeight="45"/>
+
+                    <Label fx:id="taskStatusLabel"
+                           text="Ready"
+                           style="-fx-text-fill: gray;"/>
+
+                    <Separator/>
+
+                    <Button onAction="#backToDashboard"
+                            styleClass="secondary-button"
+                            text="Back To Dashboard"/>
+
                 </VBox>
 
-                <VBox prefWidth="620.0" spacing="15.0" styleClass="table-panel">
+                <!-- Right Table Panel -->
+                <VBox prefWidth="690.0" spacing="15.0" styleClass="table-panel">
+
                     <padding>
-                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0" />
+                        <Insets bottom="25.0" left="20.0" right="20.0" top="25.0"/>
                     </padding>
 
-                    <Label styleClass="section-title" text="Current Orders" />
-                    
-                    
+                    <Label styleClass="section-title" text="Current Orders"/>
+
                     <HBox alignment="CENTER_LEFT" spacing="10">
 
-                        <TextField fx:id="searchTableIdField" promptText="Search Table Number" styleClass="input-field" />
+                        <TextField fx:id="searchTableIdField"
+                                   promptText="Search Table Number"
+                                   styleClass="input-field"
+                                   prefWidth="180"/>
 
-                        <ComboBox fx:id="filterStatusBox" promptText="Filter Status" styleClass="input-field" />
+                        <ComboBox fx:id="filterStatusBox"
+                                  promptText="Filter Status"
+                                  styleClass="input-field"
+                                  prefWidth="150"/>
 
-                        
-                        <ComboBox fx:id="sortOrderBox" promptText="Sort" styleClass="input-field" />
+                        <ComboBox fx:id="sortOrderBox"
+                                  promptText="Sort"
+                                  styleClass="input-field"
+                                  prefWidth="180"/>
 
                     </HBox>
-                    <TableView fx:id="tableView" prefHeight="430.0" prefWidth="580.0">
+
+                    <TableView fx:id="tableView"
+                               prefHeight="310.0"
+                               prefWidth="650.0">
+
                         <columns>
-                            <TableColumn fx:id="idColumn" prefWidth="70.0" text="ID" />
-                            <TableColumn fx:id="tableNumberColumn" prefWidth="120.0" text="Table Number" />
-                            <TableColumn fx:id="itemNameColumn" prefWidth="180.0" text="Item Name" />
-                            <TableColumn fx:id="quantityColumn" prefWidth="110.0" text="Quantity" />
-                            <TableColumn fx:id="statusColumn" prefWidth="160.0" text="Status" />
+                            <TableColumn fx:id="idColumn"
+                                         prefWidth="70.0"
+                                         text="ID"/>
+
+                            <TableColumn fx:id="tableNumberColumn"
+                                         prefWidth="120.0"
+                                         text="Table Number"/>
+
+                            <TableColumn fx:id="itemNameColumn"
+                                         prefWidth="180.0"
+                                         text="Item Name"/>
+
+                            <TableColumn fx:id="quantityColumn"
+                                         prefWidth="110.0"
+                                         text="Quantity"/>
+
+                            <TableColumn fx:id="statusColumn"
+                                         prefWidth="160.0"
+                                         text="Status"/>
                         </columns>
+
                     </TableView>
+
+                    <Label text="Kitchen Summary"
+                           styleClass="section-title"/>
+
+                    <TextArea fx:id="kitchenSummaryArea"
+                              prefHeight="145.0"
+                              prefWidth="650.0"
+                              editable="false"
+                              wrapText="true"
+                              promptText="Kitchen summary will appear here..."/>
+
                 </VBox>
 
             </children>
 
         </HBox>
+
     </children>
+
 </AnchorPane>

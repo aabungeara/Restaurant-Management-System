@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="560.0" prefWidth="900.0"
+            stylesheets="@../style/style.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controller.ReportsController">
+
+    <children>
+
+        <HBox prefHeight="560.0" prefWidth="900.0">
+
+            <children>
+
+                <VBox prefWidth="300.0"
+                      spacing="15.0"
+                      styleClass="form-panel">
+
+                    <padding>
+                        <Insets top="25.0" right="20.0" bottom="25.0" left="20.0"/>
+                    </padding>
+
+                    <Label text="Reports"
+                           styleClass="section-title"/>
+
+                    <ComboBox fx:id="reportTypeBox"
+                              promptText="Select Report Type"
+                              styleClass="input-field"/>
+
+                    <Button fx:id="generateReportBtn"
+                            text="Generate Report"
+                            onAction="#handleGenerateReport"
+                            styleClass="main-button"/>
+
+                    <Button fx:id="cancelBtn"
+                            text="Cancel"
+                            onAction="#handleCancelReport"
+                            disable="true"
+                            styleClass="danger-button"/>
+
+                    <ProgressIndicator fx:id="progressIndicator"
+                                       visible="false"
+                                       prefWidth="45"
+                                       prefHeight="45"/>
+
+                    <Label fx:id="statusLabel"
+                           text="Ready"
+                           style="-fx-text-fill: gray;"/>
+
+                    <Separator/>
+
+                    <Button text="Back To Dashboard"
+                            onAction="#backToDashboard"
+                            styleClass="secondary-button"/>
+
+                </VBox>
+
+                <VBox prefWidth="600.0"
+                      spacing="15.0"
+                      styleClass="table-panel">
+
+                    <padding>
+                        <Insets top="25.0" right="20.0" bottom="25.0" left="20.0"/>
+                    </padding>
+
+                    <Label text="Report Output"
+                           styleClass="section-title"/>
+
+                    <TextArea fx:id="reportOutputArea"
+                              prefHeight="465.0"
+                              prefWidth="560.0"
+                              editable="false"
+                              wrapText="true"
+                              promptText="Generated report will appear here..."/>
+
+                </VBox>
+
+            </children>
+
+        </HBox>
+
+    </children>
+
+</AnchorPane>

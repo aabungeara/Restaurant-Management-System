@@ -20,11 +20,13 @@ import util.Session;
  * @author hp
  */
 public class DashboardController implements Initializable {
+
     @FXML
     private Label welcomeLabel;
 
     /**
      * Initializes the controller class.
+     *
      * @param url
      * @param rb
      */
@@ -35,8 +37,8 @@ public class DashboardController implements Initializable {
         } else {
             welcomeLabel.setText("Welcome!");
         }
-        
-    }    
+
+    }
 
     @FXML
     private void goToTables(ActionEvent event) throws IOException {
@@ -58,5 +60,15 @@ public class DashboardController implements Initializable {
         Session.clear();
         SceneUtil.switchScene(event, "/view/login.fxml");
     }
-    
+
+    @FXML
+    private void goToBills(ActionEvent event) {
+        SceneUtil.switchScene(event, "/view/bills.fxml");
+    }
+
+    @FXML
+    private void goToReports(ActionEvent event) {
+        SceneUtil.switchScene(event, "/view/reports.fxml");
+    }
+
 }

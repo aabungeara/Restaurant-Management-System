@@ -76,7 +76,7 @@ public class RestaurantTable {
         sb.append("id=").append(id);
         sb.append(", tableNumber=").append(tableNumber);
         sb.append(", capacity=").append(capacity);
-        sb.append(", userEmail=").append(user.getEmail());
+        sb.append(", userEmail=").append(user != null ? user.getEmail() : "N/A");
         sb.append('}');
         return sb.toString();
     }

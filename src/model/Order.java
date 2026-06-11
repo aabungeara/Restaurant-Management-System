@@ -8,8 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "orders")
@@ -31,7 +30,9 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "item_id")
     private MenuItem item;
-    
+
+    @Column(name = "order_date")
+    private LocalDate orderDate;
 
     //Constructors
     public Order() {
@@ -93,6 +94,14 @@ public class Order {
         this.item = item;
     }
 
+    public LocalDate getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(LocalDate orderDate) {
+        this.orderDate = orderDate;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -107,6 +116,4 @@ public class Order {
         return sb.toString();
     }
 
-    
-    
 }

@@ -35,4 +35,8 @@ public class MenuService {
         return MenuItemRepo.menuItemNameExists(name, currentId, Session.getUserId());
     }
 
+    public List<MenuItem> findByCategory(String category) {
+        return MenuItemRepo.findByCategory(category, Session.getUserId());
+    }
+
 }

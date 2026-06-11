@@ -137,4 +137,27 @@ public class TableRepo {
             em.close();
         }
     }
+
+    public static RestaurantTable findByTableNumber(int tableNumber, int userId) {
+
+        EntityManager em = JPAUtil.getEntityManager();
+
+        try {
+            List<RestaurantTable> result = em.createQuery(
+                    "SELECT t FROM RestaurantTable t "
+                    + "JOIN FETCH t.user "
+                    + "WHERE t.tableNumber = :num "
+                    + "AND t.user.id = :uid",
+                    RestaurantTable.class
+            )
+                    .setParameter("num", tableNumber)
+                    .setParameter("uid", userId)
+                    .getResultList();
+
+            return result.isEmpty() ? null : result.get(0);
+
+        } finally {
+            em.close();
+        }
+    }
 }

@@ -14,7 +14,7 @@ import util.Session;
  * @author hp
  */
 public class TableService {
-    
+
     public List<RestaurantTable> getUserTables() {
         return TableRepo.getAllTables(Session.getUserId());
     }
@@ -33,5 +33,9 @@ public class TableService {
 
     public boolean isDuplicate(int tableNumber, int currentId) throws Exception {
         return TableRepo.tableNumberExists(tableNumber, currentId, Session.getUserId());
+    }
+
+    public RestaurantTable findByTableNumber(int tableNumber) {
+        return TableRepo.findByTableNumber(tableNumber, Session.getUserId());
     }
 }
